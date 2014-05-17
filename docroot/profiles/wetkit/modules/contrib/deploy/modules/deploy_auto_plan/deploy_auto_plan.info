@@ -1,0 +1,15 @@
+name = Auto Deployment Plans
+description = "Automagically add all modified entities to a deployment plan."
+core = 7.x
+
+dependencies[] = deploy
+
+files[] = deploy_auto_plan.test
+
+
+; Information added by drush on 2014-05-02
+version = "7.x-2.0-alpha2+22-dev"
+core = "7.x"
+project = "deploy"
+datestamp = "1399010940"
+
