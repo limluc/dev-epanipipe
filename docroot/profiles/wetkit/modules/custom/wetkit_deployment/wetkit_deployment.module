@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the Deployed content feature.
- */
-
-include_once 'wetkit_deployment.features.inc';
