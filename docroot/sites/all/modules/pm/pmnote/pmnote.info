@@ -1,0 +1,16 @@
+name = PM Note
+description = "Allows creation of notes about organizations, projects or tasks."
+dependencies[] = views
+dependencies[] = pm
+dependencies[] = pmorganization
+dependencies[] = pmproject
+dependencies[] = pmtask
+package = Project Management
+core = 7.x
+
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-1.0-alpha3"
+core = "7.x"
+project = "pm"
+datestamp = "1380622260"
+

@@ -1,0 +1,19 @@
+name = Project Management
+description = "Base module of a set designed to help in Project Management."
+core = 7.x
+package = Project Management
+configure = admin/config/pm
+
+files[] = pm.test
+files[] = pm_handler_field_attributes_domain.inc
+files[] = pm_handler_field_operation.inc
+files[] = pm_handler_filter_attributes_domain.inc
+
+dependencies[] = views
+
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-1.0-alpha3"
+core = "7.x"
+project = "pm"
+datestamp = "1380622260"
+

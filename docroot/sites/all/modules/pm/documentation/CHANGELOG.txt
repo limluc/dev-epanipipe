@@ -1,0 +1,18 @@
+** New issues added should be added at the TOP of the list for each version as they are committed. **
+
+Version 7.x-1.0-alpha3:
+- Issue #2062955 by juliangb | MoneyTalks: Fixed pm organization module has wrong conditional with person.
+- Issue #2059623 by juliangb: Change module names from 'Project Management XYZ" to "PM XYZ".
+- Issue #2064515 by juliangb | plepnev: Fixed Error on editing project.
+- Issue #1848938 by juliangb | willwh: Fixed View handlers missing.
+
+Version 7.x-1.0-alpha2:
+- Issue #2047761 by juliangb: Improve configuration pages.
+- Issue #2044525 by juliangb | modctek: Port Dashboard block to Drupal 7 version.
+- Issue #2037411 by juliangb | gapa: Fixed Remove tasks tab from project node.
+- Issue #1996886 by Raphael Dürst, juliangb | dbt102: Fixed Error viewing Project.
+- Issue #2036773 by Raphael Dürst | gapa: Fixed Error viewing Ticket.
+- Issue #1994568 by juliangb, Raphael Dürst | jandewit6: Fixed Warning on saving ticket.
+
+Version 7.x-1.0-alpha1:
+- Task #510742: Port to Drupal 7. No functionality changes.

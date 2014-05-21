@@ -74,15 +74,7 @@ function sms_track_cron() {
  */
 function sms_track_menu() {
   $items = array();
-//  $items['sms_parse'] = array(
-//    'title' => 'SMS parse',
-//    'type' => MENU_NORMAL_ITEM,
-//
-//    'page callback' => 'sms_track_insert',
-//    //'page arguments' => array('sms_track_test'),
-//    'access arguments' => array('administer smsframework'),
-//    //'file' => 'sms_track.admin.inc',
-//  );
+
   $items['admin/smsframework/sms_track'] = array(
     'title' => 'Message tracking',
     'description' => 'Options and view for the message archive.',
@@ -252,24 +244,18 @@ function sms_track_archive_write($dir, $number, $message, $options = array()) {
    ('%s', %d, '%s', '%s', '%s', %d, %d, '%s')", $reference, $dir, $number, $gw_number, $message, $status, $created, $options_z) */
 
   $result = $id = db_insert('sms_track')
-    ->fields(array(
-      'reference' => $reference,
-      'dir' => $dir,
-      'number' => $number,
-      'gw_number' => $gw_number,
-      'message' => utf8_encode($message),
-      'status' => $status,
-      'created' => $created,
-      'options' => $options_z,
-    ))
-    ->execute();
+  ->fields(array(
+    'reference' => $reference,
+    'dir' => $dir,
+    'number' => $number,
+    'gw_number' => $gw_number,
+    'message' => $message,
+    'status' => $status,
+    'created' => $created,
+    'options' => $options_z,
+  ))
+  ->execute();
 
-  if(module_exists('WSNobservations')){
-    $MSG = sms_track_archive_parse_to_WSN($number,utf8_encode($message), $options_z);
-    //twowaysms_send($number, $MSG, $options_z);
-    echo $MSG;
-    //sms_send($number, $MSG, $options_z);
-  }
   if (! $result) {
     $to_from = ($dir == 0) ? 'To' : 'From';
     watchdog('sms_track', 'Failed to record message: ' . $to_from . ' ' . $number . ': ' . $message);
@@ -343,130 +329,3 @@ function sms_track_archive_purge($max_age_days = NULL) {
     ->execute();
   }
 }
-
-
-function sms_track_archive_parse_to_WSN($number, $message, $options = array()) {
-//function sms_track_insert() {
-//function sms_track_insert($message,$number) {
-  //just for testing
-  //$number = '447930272359';
-  //$message = '£7J7J7J\'!7J7I8K\'!8I8I8J+!¤';
-  $created = REQUEST_TIME;
-  $str_len = 0;
-  $dataStartBit = '£';
-  $endbit = '¤';
-  $specialStartBit = '¢';
-  $rowdata = array();
-  //if message is valid
-  if(isset($message)){
-    $query = db_select('WSNnodes', 'nod');
-    //fields to be extracted
-    $results = $query
-      ->fields('nod', array('inputIdentifier','dataCompressionTech','timeInterval','occOrder','readNumOccurence','numSensorUnit','sensorDelimiter','dataDelimiter'))
-      ->condition('inputIdentifier', $number)
-      ->execute();
-    
-    //for check result //should be one only since inputIdentifier is unique number
-     foreach ($results as $result) {
-        $intervalSet = $result->timeInterval;
-        $dataDelimiter = $result->dataDelimiter;
-        $sensorDelimiter = $result->sensorDelimiter;
-        $numSensorUnit = $result->numSensorUnit;
-        $occOrder = $result->occOrder;
-        //$numOccurence = $result->readNumOccurence; //only use if implementation has specific set of readings
-        //for($i = 1; $i <= ($numOccurence); $i++){
-        //for loop  for data
-        if(substr($message,$str_len,2) == $specialStartBit){
-              //water level loop - to be added
-              $str_len=+2;
-        }
-        if(substr($message,$str_len,2) == $dataStartBit){
-            //water level loop
-            $str_len=+2;
-            $dataSetAvail =  round(((strlen($message)-stristr($message,$endbit)-5)/$numSensorUnit));
-            for($tloop = 1; $tloop <= $dataSetAvail; $tloop++){
-                if($occOrder == 'ASC'){
-                    $obsTime[$tloop] = $created-($intervalSet*($dataSetAvail-$tloop));
-                     //echo $tloop.'_'.$dataSetAvail.'_'.$obsTime[$tloop].'____';
-                }
-                if($occOrder =='DESC'){
-                    $obsTime[$tloop] = $created-($intervalSet*($tloop-1));
-                }
-            }
-            //for($i = 1; $i <= ($numOccurence); $i++){
-            for($i = 1; $i <= $dataSetAvail; $i++){
-                while(substr($message,$str_len,1) == $dataDelimiter){
-                    $str_len++;
-                        if(substr($message,$str_len,1)== $dataDelimiter){
-                            $str_len=$str_len+$numSensorUnit;
-                        }
-                }
-                for($j = 1; $j <= ($numSensorUnit); $j++){
-                      $query = db_select('WSNsensors', 'sen');
-                      $query -> innerjoin('node', 'n','n.nid = sen.nid');
-                      $query -> innerjoin('WSNnodes', 'nod', 'sen.nodes_nid = nod.nid');
-                      $results = $query
-                          ->fields('n', array('nid','vid','title'))
-                          ->fields('nod', array('sites_title','sites_nid','inputIdentifier','dataCompressionTech','readNumOccurence','numSensorUnit','sensorDelimiter','dataDelimiter'))
-                          ->fields('sen', array('nodes_title','nodes_nid','nid','vid','minOpRa','maxOpRa','polya0','polya1','polya2','orderBy','iCode'))
-                          //->condition('n.type', 'WSNnodes')
-                          ->condition('inputIdentifier', $number)
-                          ->condition('orderBy', $j)
-                          ->orderBy('nod.nid', 'ASC')
-                          ->execute();
-                      
-                      foreach ($results as $result){
-                            $errMSG = 'ER0';
-                            $obsMSG = 'OK';
-                            //skip if delimiter available
-                          //echo substr($message,$str_len,1).$sensorDelimiter;
-                          while(substr($message,$str_len,1) == $sensorDelimiter AND $sensorDelimiter != ''){
-                                  $str_len++;
-                          }
-                          $value = substr($message,$str_len,1);
-                          if(($result->dataCompressionTech) == 'CHARDEC'){
-                              //data shifting
-                              $value = ord($value)-31;
-                              //data callibration and check
-                              $value = ($result->polya0)+($result->polya1)*$value+($result->polya2)*$value*$value;
-                              //if value unexpected
-                              if($value<=($result->minOpRa) OR $value>=($result->maxOpRa)){
-                                    $errMSG = 'ER2';
-                                    $obsMSG = 'Error';
-                              }
-                          }
-                          //debug save data to row  
-//                          $rowdata[] = array(
-//                            date('Y-m-d H:i', $obsTime[$i]),
-//                            substr($message,$str_len,1),
-//                            $result->vid,
-//                            $value,
-//                            $errMSG,
-//                            $obsMSG,
-//                            $str_len,
-//                            );
-                          $node = new stdclass();
-                            $node->type = 'WSNobservations';
-                            $node->title = $result->nid.$obsTime[$i];
-                            $node->sites_nid = $result->sites_nid;
-                            $node->sites_title = $result->sites_title;
-                            $node->nodes_nid = $result->nodes_nid;
-                            $node->nodes_title = $result->nodes_title;
-                            $node->sensors_nid = $result->nid;
-                            $node->sensors_title = $result->title;
-                            $node->value  = $value;
-                            $node->datetime  = date('Y-m-d H:i',$obsTime[$i]);
-                            $node->observationError = $errMSG;
-                            $node->observationCategory = $obsMSG;
-                         node_save($node);
-                    } //forereach
-                   $str_len++;
-                }//next sensor for loop 
-              }//next data for loop
-            }//valid data if statement  
-        } //data set equal inputIdentifier
-    }//if message is valid
-    //$header = array(t('Date Time'),t('Sensor'),t('Value'));
-    //return theme('table', array('header' => $header, 'rows' =>$rowdata));  
-    return 'OK';
-}   
