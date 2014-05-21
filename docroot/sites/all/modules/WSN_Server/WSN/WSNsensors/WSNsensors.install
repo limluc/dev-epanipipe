@@ -1,0 +1,280 @@
+<?php
+/**
+ * @file
+ * Installation functions for the WSN sensor module
+ */
+
+/**
+ * Implements hook_install().
+ */
+function WSNsensors_install() {
+  variable_set('node_options_WSNsensors', array('status'));
+  variable_set('node_permissions_WSNsensors', 0);
+
+  // Uncache node types
+  node_types_rebuild();
+
+  // Fetch list of current node types and add body field to WSNsensors
+  $types = node_type_get_types();
+  node_add_body_field($types['WSNsensors'], 'Description');
+
+  $attributes = array();
+
+  $attributes['Sensor Status'] = array(
+    'OK' => 'OK',
+    'ERR' => 'Error',
+  );
+
+  $attributes['Sensor Status Search'] = array(
+    '-' => 'All',
+    'OK' => 'OK',
+    'ERR' => 'Error',
+  );
+
+  $attributes['Sensor Category'] = array(
+    'UAT' => 'Test',
+    'PROD' => 'Production',
+  );
+
+  $attributes['Sensor Category Search'] = array(
+    '-' => 'ALL',
+    'UAT' => 'Test',
+    'PROD' => 'Production',
+  );
+
+  $attributes['Sensor Error'] = array(
+    'ER0' => 'N/A',
+    'ER1' => 'Unexpected',
+    'ER2' => 'Out of Range',
+    'ER3' => 'Undefined',
+  );
+
+  $attributes['Sensor Error Search'] = array(
+    '-' => 'ALL',
+    'ER0' => 'N/A',
+    'ER1' => 'Unexpected',
+    'ER2' => 'Out of Range',
+    'ER3' => 'Undefined',
+  );
+
+  $attributes['Medium'] = array(
+    'Air' => 'Sample taken from the atmosphere',
+    'Ground' => 'Sample taken from water located below the surface of the ground',
+    'Precipitation' => 'Sample taken from solid or liquid precipication',
+    'Soil' => 'Sample taken from the soil',
+    'Soil Air' => 'Air contained in the soil pores',
+    'Soil Water' => 'Water contained in the soil pores',
+    'Other' => 'Other Type of Medium'
+  );
+  
+  $attributes['Medium Search'] = array(
+    '-' => 'ALL',
+    'Air' => 'Sample taken from the atmosphere',
+    'Ground' => 'Sample taken from water located below the surface of the ground',
+    'Precipitation' => 'Sample taken from solid or liquid precipication',
+    'Soil' => 'Sample taken from the soil',
+    'Soil Air' => 'Air contained in the soil pores',
+    'Soil Water' => 'Water contained in the soil pores',
+    'Other' => 'Other Type of Medium'
+  );
+
+  $attributes['Operation Condition'] = array(
+    '1' => 'greater than',
+    '2' => 'greater than or equal to',
+    '3' => 'less than',
+    '4' => 'less than or equal to',
+    '5' => 'equal to',
+    '6' => 'not equal to', 
+  );
+  
+  $attributes['Operation Condition Search'] = array(
+    '-' => 'ALL',
+    '1' => 'greater than',
+    '2' => 'greater than or equal to',
+    '3' => 'less than',
+    '4' => 'less than or equal to',
+    '5' => 'equal to',
+    '6' => 'not equal to', 
+  );
+  
+  $attributes['Unit'] = array(
+    '1' => 'percentage (%)',
+    '2' => 'degree (deg)',
+    '3' => 'meter (m)',
+    '4' => 'centimeter (cm)',
+    '5' => 'celcius (degC)',
+    '6' => 'hertz (Hz)',
+    '7' => 'second (s)',
+    '8' => 'hour (hr)',    
+    '9' => 'minute (min)',
+    '10' => 'days (d)',
+    '11' => 'joule (J)',
+    '12' => 'kilogram (kg)',  
+  );
+  
+  $attributes['Unit Search'] = array(
+    '-' => 'ALL',
+    '1' => 'percentage (%)',
+    '2' => 'degree (deg)',
+    '3' => 'meter (m)',
+    '4' => 'centimeter (cm)',
+    '5' => 'celcius (degC)',
+    '6' => 'hertz (Hz)',
+    '7' => 'second (s)',
+    '8' => 'hour (hr)',    
+    '9' => 'minute (min)',
+    '10' => 'days (d)',
+    '11' => 'joule (J)',
+    '12' => 'kilogram (kg)',  
+  );
+  
+  
+  $prevdomain = '';
+  $weight = 0;
+  foreach ($attributes as $domain => $attribute) {
+    if ($domain != $prevdomain) $weight=0;
+    foreach ($attribute as $key => $value) {
+      db_insert('WSNattribute')
+        ->fields(array(
+          'domain' => $domain,
+          'akey' => $key,
+          'avalue' => $value,
+          'weight' => $weight,
+        ))
+        ->execute();
+      $weight++;
+    }
+    $prevdomain = $domain;
+  }
+  
+    db_update('wsnattribute')
+    ->fields(array('isdefault' => '1'))
+    ->condition('domain', 'task category')
+    ->condition('akey', 'task')
+    ->execute();
+}
+
+/**
+ * Implements hook_enable().
+ */
+function WSNsensors_enable() {
+  node_access_needs_rebuild(TRUE);
+}
+
+/**
+ * Implements hook_disable().
+ */
+function WSNsensors_disable() {
+  node_access_needs_rebuild(TRUE);
+  drupal_set_message(t('Nodes of type "Sensor" have not been deleted on disabling WSN sensor. Please note that they will now have reduced functionality, and will not be protected by WSN sensor access controls.'), 'warning');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function WSNsensors_uninstall() {
+  drupal_uninstall_schema('WSNsensors');
+
+  db_delete('WSNattribute')
+//    ->condition('domain', array('sensor status', 'sensor status search', 'sensor category', 'sensor category search', 'sensor priority', 'sensor priority search', 'Duration unit'), 'IN')
+    ->condition('domain', array('Sensor Status', 'Sensor Status Search', 'Sensor Category', 'Sensor Category Search', 'Sensor Error', 'Sensor Error Search', 'Operating Condition', 'Operating Condition', 'Medium', 'Medium Search', 'Unit', 'Unit Search'), 'IN')
+
+    ->execute();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function WSNsensors_schema() {
+  $schema['WSNsensors'] = array(
+    'fields'         => array(
+      'vid'          => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
+      'nid'          => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
+      
+      'sites_nid'    => array('type' => 'int'),
+      'sites_title'  => array('type' => 'varchar', 'length' => 150),
+      'nodes_nid'    => array('type' => 'int'),
+      'nodes_title'  => array('type' => 'varchar', 'length' => 100),
+        
+      'sensorModel'  => array('type' => 'varchar', 'length' => 50),
+      'unit'         => array('type' => 'varchar', 'length' => 50),
+      'medium'       => array('type' => 'varchar', 'length' => 50),
+      'forecastE'     => array('type' => 'varchar', 'length' => 10),
+      
+      'sensorStatus' => array('type' => 'varchar', 'length' => 50),
+      'sensorCategory' => array('type' => 'varchar', 'length' => 50),
+      'sensorError'  => array('type' => 'varchar', 'length' => 50),
+     
+      'minOpRa'      => array('type' => 'int', 'default' => 0),
+      'maxOpRa'      => array('type' => 'int', 'default' => 0),
+      'polya0'       => array('type' => 'int', 'default' => 0),
+      'polya1'       => array('type' => 'int', 'default' => 1),
+      'polya2'       => array('type' => 'int', 'default' => 0),
+      
+      'orderBy'      => array('type' => 'int', 'default' => 0),
+      'iCode'        => array('type' => 'varchar', 'length' => 100),
+      
+      'notificationE'=> array('type' => 'int', 'default' => 0),
+      'opCondition'    => array('type' => 'varchar', 'length' => 100),
+      'criteria'     => array('type' => 'int', 'default' => 0),
+      'message'      => array('type' => 'varchar', 'length' => 100),
+      'receiverNum'  => array('type' => 'varchar', 'length' => 100),
+      
+    ),
+    'primary key' => array('vid'),
+    'indexes'     => array(
+      'nid'           => array('nid'),
+      'sites_nid'     => array('sites_nid'),
+      'nodes_nid'     => array('nodes_nid'),
+    )
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function WSNsensors_update_last_removed() {
+  return 6202;
+}
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function WSNsensors_update_dependencies() {
+  // Ensure that billing status field is created before instance.
+  $dependencies['WSNsensors'][7103] = array(
+    'WSN' => 7102,
+  );
+
+  return $dependencies;
+}
+
+/**
+ * Adds Drupal 7 style body field to WSN sensor node
+ */
+function WSNsensors_update_7100() {
+  // Uncache node types
+  node_types_rebuild();
+  // Fetch list of current node types and add body field to WSN sensor
+  $types = node_type_get_types();
+  node_add_body_field($types['WSNsensors'], 'Description');
+
+  return 'Added D7 style body field to WSN sensor nodes';
+}
+
+/**
+ * Allow WSN to override the default sensor content type CRUD permissions
+ */
+function WSNsensors_update_7101() {
+  variable_set('node_permissions_WSNsensors', 0);
+  return 'WSN sensor permissions overridden';
+}
+
+/**
+ * Display message to admin regarding need to rebuild permission.
+ */
+function WSNsensors_update_7102() {
+  node_access_needs_rebuild(TRUE);
+}

@@ -1,0 +1,14 @@
+name = "2-WaySMS Gateway Module"
+description = "Gateway: Configurable module for quick & easy integration to 2-waysms.com gateway provider"
+package = SMS Framework
+core = 7.x
+dependencies[] = sms
+
+files[] = twowaysms.module
+ 
+
+; Information added by drupal.org packaging script on 2014-02-02
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "2-waysms-gateway"
+

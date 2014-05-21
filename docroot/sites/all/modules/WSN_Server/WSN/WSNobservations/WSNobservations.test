@@ -1,0 +1,80 @@
+<?php
+/**
+ * @file
+ * Test definitions for the WSN Observations module
+ */
+
+/**
+ * Class defining WSN Observations test cases.
+ */
+class WSNobservationsTestCase extends DrupalWebTestCase {
+
+  /**
+   * Defines this group of test cases.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('WSN Observations Functionality'),
+      'description' => t('Test the functionality of the WSN Observations module'),
+      'group' => 'WSN',
+    );
+  }
+
+  /**
+   * Provides standard set up for all test cases.
+   */
+  public function setUp() {
+    parent::setUp('WSN', 'WSNsites', 'WSNnodes', 'WSNsensors', 'WSNobservations');
+  }
+
+  /**
+   * Test of access controls on Observations lists.
+   */
+  public function testWSNobservationsAccess() {
+    $this->drupalGet('WSN/Observations');
+    $this->assertResponse(403, t('Make sure access is denied to WSN Observations list for anonymous user'));
+
+    $basic_user = $this->drupalCreateUser();
+    $this->drupalLogin($basic_user);
+    $this->drupalGet('WSN/Observations');
+    $this->assertResponse(403, t('Make sure access is denied to WSN Observations list for basic user'));
+
+    $privileged_user = $this->drupalCreateUser(array('WSN Observations: access'));
+    $this->drupalLogin($privileged_user);
+    $this->drupalGet('WSN/Observations');
+    $this->assertText(t('Observations'), t('Make sure the correct page has been displayed by checking that the title is "Observations".'));
+  }
+
+  /**
+   * Test of Observations node creation.
+   */
+  public function testWSNobservationsCreate() {
+    // Create and login user
+    $user = $this->drupalCreateUser(array('WSN Sites: add', 'WSN Sites: view all', 'WSN Sensors: add', 'WSN Sensors: view all', 'WSN Nodes: add', 'WSN Nodes: view all', 'WSN Observations: add', 'WSN Observations: view all'));
+    $this->drupalLogin($user);
+
+    // Create Sites and invoice
+    $sit = array(
+      'title' => $this->randomName(32),
+      'body' => $this->randomName(64),
+    );
+    $nod = array(
+      'title' => $this->randomName(32),
+      'Sites_nid' => '1',
+    );
+    $sen = array(
+      'title' => $this->randomName(32),
+      'nodes_nid' => '1',
+    );
+    
+    $Observations = array(
+      'title' => $this->randomName(32),
+      'body' => $this->randomName(64),
+    );
+//    $this->drupalPost('node/add/WSNSites', $org, t('Save'));
+//    $this->drupalPost('node/add/WSNnode', $prj, t('Save'));
+//    $this->drupalPost('node/add/WSNobservations', $Observations, t('Save'));
+
+//    $this->assertText(t('Observations @title has been created.', array('@title' => $Observations['title'])));;
+  }
+}

@@ -1,0 +1,66 @@
+<?php
+/**
+ * @file
+ * Test definitions for the WSN sensors module
+ */
+class WSNsensorsTestCase extends DrupalWebTestCase {
+
+  /**
+   * Provides metadata about this group of test cases.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => t('WSN Sensors Functionality'),
+      'description' => t('Test the functionality of the WSN sensors module'),
+      'group' => 'WSN',
+    );
+  }
+
+  /**
+   * Standard configuration for all test cases.
+   */
+  public function setUp() {
+    parent::setUp('views', 'WSN','WSNsites', 'WSNnodes', 'WSNsensors');
+  }
+
+  /**
+   * Test case covering access of sensors list.
+   */
+  public function testWSNsensorsAccess() {
+    $this->drupalGet('WSN/sensors');
+    $this->assertResponse(403, t('Make sure access is denied to WSN sensors list for anonymous user'));
+
+    $basic_user = $this->drupalCreateUser();
+    $this->drupalLogin($basic_user);
+    $this->drupalGet('WSN/sensors');
+    $this->assertResponse(403, t('Make sure access is denied to WSN sensors list for basic user'));
+
+    $privileged_user = $this->drupalCreateUser(array('WSN sensors: access'));
+    $this->drupalLogin($privileged_user);
+    $this->drupalGet('WSN/sensors');
+    $this->assertText(t('sensors'), t('Make sure the correct page has been displayed by checking that the title is "sensors".'));
+  }
+
+  /**
+   * Test case covering creation of WSNsensorss.
+   */
+  public function testWSNsensorsCreate() {
+    // Create and login user
+    $user = $this->drupalCreateUser(array('WSN Nodes: add', 'WSN Nodes: view all', 'WSN sensors: add', 'WSN sensors: view all'));
+    $this->drupalLogin($user);
+
+    // Create Nodes and invoice
+    $org = array(
+      'title' => $this->randomName(32),
+      'body' => $this->randomName(64),
+    );
+    $prj = array(
+      'title' => $this->randomName(32),
+      'nodes_nid' => '1',
+    );
+//    $this->drupalPost('node/add/WSNNodes', $org, t('Save'));
+//    $this->drupalPost('node/add/WSNsensors', $prj, t('Save'));
+
+//    $this->assertText(t('sensors @title has been created.', array('@title' => $prj['title'])));;
+  }
+}

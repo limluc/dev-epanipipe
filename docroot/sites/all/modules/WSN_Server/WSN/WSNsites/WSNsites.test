@@ -1,0 +1,59 @@
+<?php
+/**
+ * @file
+ * Test definitions for the WSN Sites module
+ */
+class PMSitesTestCase extends DrupalWebTestCase {
+
+  /**
+   * Provides metadata about this group of test cases.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'WSN Sites functionality',
+      'description' => 'Test the functionality of the WSN Sites module',
+      'group' => 'WSN',
+    );
+  }
+
+  /**
+   * Standard configuration for all test cases.
+   */
+  public function setUp() {
+    parent::setUp('views', 'WSN', 'WSNsites');
+  }
+
+  /**
+   * Test case covering access of sites list.
+   */
+  public function testWSNsitesAccess() {
+    $this->drupalGet('WSN/sites');
+    $this->assertResponse(403, t('Make sure access is denied to WSN Sites list for anonymous user'));
+
+    $basic_user = $this->drupalCreateUser();
+    $this->drupalLogin($basic_user);
+    $this->drupalGet('WSN/sites');
+    $this->assertResponse(403, t('Make sure access is denied to WSN Sites list for basic user'));
+
+    $privileged_user = $this->drupalCreateUser(array('WSN Sites: access'));
+    $this->drupalLogin($privileged_user);
+    $this->drupalGet('WSN/sites');
+    $this->assertText(t('Sites'), t('Make sure the correct page has been displayed by checking that the title is "Sites".'));
+  }
+
+  /**
+   * Test case covering creation of WSNsitess.
+   */
+  public function testWSNsitesCreate() {
+    $privileged_user = $this->drupalCreateUser(array('WSN Sites: add'));
+    $this->drupalLogin($privileged_user);
+
+    $edit = array(
+      'title' => $this->randomName(32),
+//      'body' => $this->randomName(64),
+    );
+    $this->drupalPost('node/add/WSNsites', $edit, t('Save'));
+    $this->assertText(t('Sites @title has been created.', array('@title' => $edit['title'])));
+  }
+
+}

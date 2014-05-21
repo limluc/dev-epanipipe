@@ -1,0 +1,128 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the WSN module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function WSN_install() {
+  variable_set('WSN_icons_path', drupal_get_path('module', 'WSN') . '/icons');
+  variable_set('WSN_sites_nid', 0);
+  
+  // Set up date field.
+  field_create_field(array(
+    'type' => 'datetime',
+    'field_name' => 'wsn_date',
+    'settings' => array(
+      'granularity' => array(
+        'year' => 'year',
+        'month' => 'month',
+        'day'   => 'day',
+        'hour' => 'hour',
+        'minute' => 'minute',
+        'second' => 0,
+      ),
+      'tz_handling' => 'none',
+      'timezone_db' => '',
+      'todate' => 'optional',
+    ),
+    'cardinality' => '1',
+  ));
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function WSN_uninstall() {
+  variable_del('WSN_icons_path');
+  variable_del('WSN_sites_nid');
+
+  drupal_uninstall_schema('WSN');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function WSN_schema() {
+  $schema['WSNattribute'] = array(
+    'fields'          => array(
+      'aid'           => array('type' => 'serial', 'not null' => TRUE),
+      'domain'        => array('type' => 'varchar', 'length' => 100),
+      'akey'          => array('type' => 'varchar', 'length' => 100),
+      'avalue'        => array('type' => 'varchar', 'length' => 100),
+      'parent_domain' => array('type' => 'varchar', 'length' => 100),
+      'weight'        => array('type' => 'int', 'not null' => FALSE, 'default' => 0, 'size' => 'small'),
+      'isdefault'     => array('type' => 'int', 'not null' => FALSE, 'default' => 0, 'size' => 'tiny'),
+      'isactive'      => array('type' => 'int', 'not null' => FALSE, 'default' => 1, 'size' => 'tiny'),
+    ),
+    'primary key' => array('aid'),
+    'indexes' => array(
+      'domain'        => array('domain'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function WSN_update_last_removed() {
+  return 6202;
+}
+
+function WSN_update_7101() {
+  // Enable new dependencies.
+  if (!module_enable(array('date', 'entityreference', 'list'))) {
+    throw new DrupalUpdateException('This version requires one or more modules that could not be enabled.');
+  }
+
+  // Combining these operations in one request means we have to clear the
+  // field info cache.
+  field_info_cache_clear();
+
+//  // Set up billing status field.
+//  field_create_field(array(
+//    'field_name' => 'WSN_billing_status',
+//    'type' => 'list_text',
+//    'settings' => array(
+//      'allowed_values' => array(
+//        'Not billable' => 'Not billable',
+//        'Billable' => 'Billable',
+//        'Billed' => 'Billed',
+//      ),
+//    ),
+//  ));
+}
+
+/**
+ * Make date field available to WSN content types.
+ */
+function WSN_update_7102() {
+
+  // Set up date field.
+  field_create_field(array(
+    'type' => 'datetime',
+    'field_name' => 'WSN_date',
+    'settings' => array(
+      'granularity' => array(
+        'year' => 'year',
+        'month' => 'month',
+        'day' => 'day',
+        'hour' => 'hour',
+        'minute' => 'minute',
+        'second' => 0,
+      ),
+      'tz_handling' => 'none',
+      'timezone_db' => '',
+      'todate' => 'optional',
+    ),
+    'cardinality' => '1',
+  ));
+
+  variable_del('WSN_yearsrangebegin');
+  variable_del('WSN_yearsrangeend');
+}

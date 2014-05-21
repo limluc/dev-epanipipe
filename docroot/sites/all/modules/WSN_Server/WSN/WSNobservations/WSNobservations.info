@@ -1,0 +1,16 @@
+name = WSN Observation
+description = "Allows recording of Observations for WSN Sites, Nodes, and Sensors"
+dependencies[] = WSN
+dependencies[] = WSNsites
+dependencies[] = WSNnodes
+dependencies[] = WSNsensors
+package = WSN
+core = 7.x
+files[] = WSNobservations.test
+
+; Information added by drupal.org packaging script on 2014-01-01
+version = "7.x-1.0-dev1"
+core = "7.x"
+Node = "WSN"
+datestamp = "1380622260"
+

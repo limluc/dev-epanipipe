@@ -1,0 +1,15 @@
+name = WSN Node
+description = "Allows recording of Nodes based on WSN Sites"
+dependencies[] = views
+dependencies[] = WSN
+dependencies[] = WSNsites
+package = WSN
+core = 7.x
+files[] = WSNnodes.test
+
+; Information added by drupal.org packaging script on 2014-01-01
+version = "7.x-1.0-dev1"
+core = "7.x"
+Node = "WSN"
+datestamp = "1380622260"
+

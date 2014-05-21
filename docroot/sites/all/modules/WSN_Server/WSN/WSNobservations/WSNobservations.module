@@ -1,0 +1,1482 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_help().
+ */
+function WSNobservations_help($path, $arg) {
+  $s = '';
+
+  switch ($path) {
+    case "admin/help#WSNobservations":
+      $s = '<p>' . t("Provides Observations support for WSN") . '</p>';
+      break;
+  }
+
+  return $s;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function WSNobservations_permission() {
+  return array(
+    'WSN Observations: access' => array(
+      'title' => t('Access WSN Observations'),
+    ),
+    'WSN Observations: add' => array(
+      'title' => t('Add WSN Observations'),
+    ),
+    'WSN Observations: delete all' => array(
+      'title' => t('Delete Any WSN Observations'),
+    ),
+    'WSN Observations: delete own' => array(
+      'title' => t('Delete Authored WSN Observations'),
+    ),
+    'WSN Observations: delete of user sites' => array(
+      'title' => t('Delete WSN Observations in own sites'),
+    ),
+//    'WSN Observations: delete if assigned to Observations' => array(
+//      'title' => t('Delete WSN Observations if user assigned to Observations'),
+//    ),
+    'WSN Observations: edit all' => array(
+      'title' => t('Edit Any WSN Observations'),
+    ),
+    'WSN Observations: edit own' => array(
+      'title' => t('Edit Authored WSN Observations'),
+    ),
+    'WSN Observations: edit of user sites' => array(
+      'title' => t('Edit WSN Observations in own sites'),
+    ),
+//    'WSN Observations: edit if assigned to Observations' => array(
+//      'title' => t('Edit WSN Observations if user assigned to Observations'),
+//    ),
+    'WSN Observations: view all' => array(
+      'title' => t('View Any WSN Observations'),
+    ),
+    'WSN Observations: view own' => array(
+      'title' => t('View Authored'),
+    ),
+    'WSN Observations: view of user sites' => array(
+      'title' => t('View WSN Observations in own sites'),
+    ),
+//    'WSN Observations: view if assigned to Observations' => array(
+//      'title' => t('View WSN Observations if user assigned to Observations'),
+//    ),
+  );
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function WSNobservations_node_access($node, $op, $account = NULL) {
+  $type = is_string($node) ? $node : $node->type;
+  if ($type == 'WSNobservations') {
+    // If no account is specified, assume that the check is against the current logged in user
+    if (is_null($account)) {
+      global $user;
+      $account = $user;
+    }
+    if ($op == 'create' AND user_access('WSN Observations: add', $account)) {
+      return NODE_ACCESS_ALLOW;
+    }
+  }
+  return NODE_ACCESS_IGNORE;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function WSNobservations_menu() {
+  
+  $items['admin/config/WSN/Observations'] = array(
+    'title' => 'WSN Observations',
+    'description' => 'Administer WSN Observations.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('WSNobservations_admin_settings'),
+    'access arguments' => array('WSN: access administration pages'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Admin settings form for WSNobservations module.
+ */
+function WSNobservations_admin_settings() {
+  $form = array();
+
+//  $form['WSNobservations_billable_default'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Default Value for billable field.'),
+//    '#default_value' => variable_get('WSNobservations_billable_default', FALSE),
+//    '#description' => t('When checked, WSN will set the Observations to billable by default'),
+//    '#size' => 5,
+//  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function WSNobservations_theme() {
+  return array(
+    'WSNobservations_view' => array(
+      'file'      => 'WSNobservations.theme.inc',
+      'variables' => array('node', 'view_mode'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_info().
+ */
+function WSNobservations_node_info() {
+  return array(
+    'WSNobservations' => array(
+      'name' => t('Observations'),
+      'base' => 'WSNobservations',
+      'description' => t("Observation of WSN"),
+      'title_label' => t("Title"),
+      'body_label' => t("Description"),
+    )
+  );
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ */
+function WSNobservations_field_extra_fields() {
+  $extra['node']['WSNobservations'] = array(
+    'form' => array(
+      'group1' => array(
+        'label' => 'WSN Tree',
+        'weight' => -20,
+      ),
+      'group2' => array(
+        'label' => 'Value',
+        'weight' => -18,
+      ),
+      'group3' => array(
+        'label' => 'Date Time',
+        'weight' => -17,
+      ),
+      'group4' => array(
+        'label' => 'Category / Status',
+        'weight' => -16,
+      ),
+//      'group5' => array(
+//        'label' => 'Assigned to',
+//        'weight' => -15,
+//      ),
+//      'group6' => array(
+//        'label' => 'Billable / Billed Group',
+//        'weight' => -14,
+//      ),
+    ),
+  );
+  return $extra;
+}
+
+/**
+ * Implements hook_field_extra_fields_alter().
+ */
+function WSNobservations_field_extra_fields_alter(&$info) {
+  $info['node']['WSNobservations']['form']['title']['weight'] = -19;
+}
+
+/**
+ * Implements hook_WSNsites_change().
+ */
+function WSNobservations_WSNsites_change($sites_nid, $sites_title) {
+  db_update('WSNobservations')
+    ->fields(array('sites_title' => $sites_title))
+    ->condition('sites_nid', $sites_nid)
+    ->execute();
+}
+
+/**
+ * Implements hook_WSNnodes_change().
+ */
+function WSNobservations_WSNnodes_change($nodes_nid, $nodes_title) {
+  db_update('WSNobservations')
+    ->fields(array('nodes_title' => $nodes_title))
+    ->condition('nodes_nid', $nodes_nid)
+    ->execute();
+}
+
+/**
+ * Implements hook_WSNsensors_change().
+ */
+function WSNobservations_WSNsensors_change($sensors_nid, $sensors_title) {
+  db_update('WSNobservations')
+    ->fields(array('sensors_title' => $sensors_title))
+    ->condition('sensors_nid', $sensors_nid)
+    ->execute();
+}
+
+/**
+ * Implements hook_WSNsensors_change_hierarchy().
+ */
+function WSNobservations_WSNsensors_change_hierarchy($sites_nid, $sensors_nid, $nodes_nid, $nodes_title) {
+  db_update('WSNobservations')
+    ->fields(array(
+      'nodes_nid' => $nodes_nid,
+      'nodes_title' => $nodes_title,
+    ))
+    ->condition('sensors_nid', $sensors_nid)
+    ->condition('sites_nid', $sites_nid)
+    ->execute();
+}
+
+/**
+ * Implements hook_form().
+ */
+function WSNobservations_form(&$node, $form_state) {
+  $breadcrumb = array(
+    l(t('WSN'), 'WSN'),
+    l(t('Observations'), 'WSN/Observations'),
+  );
+  drupal_set_breadcrumb($breadcrumb);
+
+  if (arg(1)=='add') {
+    if (array_key_exists('sites_nid', $_GET) && !$node->sites_nid) {
+      $node->sites_nid = $_GET['sites_nid'];
+    }
+    if (array_key_exists('nodes_nid', $_GET) && !$node->nodes_nid) {
+      $node->nodes_nid = $_GET['nodes_nid'];
+    }
+    if (array_key_exists('sensors_nid', $_GET) && !$node->sensors_nid) {
+      $node->sensors_nid = $_GET['sensors_nid'];
+      $p = node_load($node->sensors_nid);
+      // Ensure that the correct sites is loaded
+      $node->sites_nid = $p->sites_nid;
+      $node->nodes_nid = $p->nodes_nid;
+      
+     if (!drupal_valid_path('node/' . $node->sensors_nid)) {
+        drupal_set_message(t("You cannot add observation for this sensor, as you do not have access to view the sensor's profile"));
+        drupal_goto('node/' . $node->sensors_nid);
+      }
+    }
+//    if (array_key_exists('Observations_nid', $_GET) && !$node->parent_nid) {
+//      // Parent Observations can be autoloaded by use of ?Observations_nid=string
+//      $node->parent_nid = $_GET['Observations_nid'];
+//      $t = node_load($node->parent_nid);
+//      // Ensure that the correct sensors is loaded
+//      $node->sensors_nid = $t->sensors_nid;
+//      $node->sites_nid = $t->sites_nid;
+//      // If no parent sensors then no need to check access rights, there will always be a parent org.
+//      $sensors_access = $node->sensors_nid ? drupal_valid_path('node/' . $node->sensors_nid) : TRUE;
+//      if (!$sensors_access || !drupal_valid_path('node/' . $node->sites_nid)) {
+//        drupal_set_message(t("You cannot add a Observations with this parent, as you do not have access to view both the sites and sensors profiles"));
+//        drupal_goto('node/' . $node->parent_nid);
+//      }
+//    }
+  }
+
+  $type = node_type_get_type($node);
+  $info = field_info_extra_fields('node', 'WSNobservations', 'form');
+
+  $form['#attributes']['class'] = 'WSNcomponent_node_form';
+  $form['#prefix'] = '<div id="WSNobservations-form-wrapper">';
+  $form['#suffix'] = '</div>';
+
+  $form['group1'] = array(
+    '#type' => 'markup',
+    '#theme' => 'WSN_form_group',
+    '#weight' => $info['group1']['weight'],
+  );
+
+  $sites_query = db_select('node', 'n');
+  $sites_query->join('WSNsites', 'sor', 'n.vid = sor.vid');
+  $sites_result = $sites_query
+    ->fields('n', array('nid', 'title'))
+    ->condition('n.status', 1)
+    ->condition('sor.isactive', 1)
+    ->condition('n.type', 'WSNsites')
+    ->addTag('node_access')
+    ->orderBy('n.title', 'ASC')
+    ->execute();
+
+  $sitess = array();
+  foreach ($sites_result as $sites) {
+    $sitess[$sites->nid] = $sites->title;
+    if (!isset($node->sites_nid)) $node->sites_nid = $sites->nid;
+  }
+  $form['group1']['sites_nid'] = array(
+    '#type' => 'select',
+    '#title' => t('Site'),
+    '#default_value' => isset($node->sites_nid) ? $node->sites_nid : NULL,
+    '#options' => $sitess,
+    '#required' => TRUE,
+    '#ajax' => array(
+      'callback' => 'WSNobservations_form_ajax',
+      'wrapper' => 'WSNobservations-form-wrapper',
+    ),
+  );
+
+  if (isset($node->sites_nid)) {
+    $sites_nid = isset($form_state['values']['sites_nid']) ? $form_state['values']['sites_nid'] : $node->sites_nid;
+  }
+  else {
+    drupal_set_message(t('Please add Site to the system before trying to add observation'), 'error');
+    $sites_nid = NULL;
+  }
+  //////
+  $nodes_query = db_select('node', 'n');
+  $nodes_query->join('WSNnodes', 'spr', 'n.vid = spr.vid');
+  $nodes_result = $nodes_query
+    ->fields('n', array('nid', 'title'))
+    ->condition('n.status', 1)
+    ->condition('spr.sites_nid', $sites_nid)
+    ->condition('n.type', 'WSNnodes')
+    ->addTag('node_access')
+    ->orderBy('n.title', 'ASC')
+    ->execute();
+
+  $nodess = array();
+  foreach ($nodes_result as $nodes) {
+    $nodess[$nodes->nid] = $nodes->title;
+    if (!isset($node->nodes_nid)) $node->nodes_nid = $nodes->nid;
+  }
+  $form['group1']['nodes_nid'] = array(
+    '#type' => 'select',
+    '#title' => t('Node'),
+    '#default_value' => isset($node->nodes_nid) ? $node->nodes_nid : NULL,
+    '#options' => $nodess,
+    '#required' => TRUE,
+    '#ajax' => array(
+      'callback' => 'WSNobservations_form_ajax',
+      'wrapper' => 'WSNobservations-form-wrapper',
+    ),
+  );
+
+  if (isset($node->nodes_nid)) {
+    $nodes_nid = isset($form_state['values']['nodes_nid']) ? $form_state['values']['nodes_nid'] : $node->nodes_nid;
+  }
+  else {
+    drupal_set_message(t('Please add Node to the system before trying to add observation'), 'error');
+    $nodes_nid = NULL;
+  }
+  ///////////////////////////////////
+  $sensor_query = db_select('node', 'n');
+  $sensor_query->join('WSNsensors', 'sse', 'n.vid = sse.vid');
+  $sensor_result = $sensor_query
+    ->fields('n', array('nid', 'title'))
+    ->condition('n.status', 1)
+    ->condition('sse.sites_nid', $sites_nid)
+    ->condition('sse.nodes_nid', $nodes_nid)
+    ->condition('n.type', 'WSNsensors')
+    ->addTag('node_access')
+    ->orderBy('n.title', 'ASC')
+    ->execute();
+
+  $sensorss = array();
+  foreach ($sensor_result as $sensors) {
+    $sensorss[$sensors->nid] = $sensors->title;
+    if (!isset($node->sensors_nid)) $node->sensors_nid = $sensors->nid;
+  }
+  $form['group1']['sensors_nid'] = array(
+    '#type' => 'select',
+    '#title' => t('Sensor'),
+    '#default_value' => isset($node->sensors_nid) ? $node->sensors_nid : NULL,
+    '#options' => $sensorss,
+    '#required' => TRUE,
+    '#prefix' => '<div id="WSNobservations-sensors-nid">',
+    '#suffix' => '</div>',
+    '#ajax' => array(
+      'callback' => 'WSNobservations_form_ajax',
+      'wrapper' => 'WSNobservations-form-wrapper',
+    ),
+  );
+
+  $form['group1']['sensors_nid_old'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($node->sensors_nid) ? $node->sensors_nid : NULL,
+  );
+
+  if (isset($node->sensors_nid)) {
+    $sensors_nid = isset($form_state['values']['sensors_nid']) ? $form_state['values']['sensors_nid'] : $node->sensors_nid;
+  }
+  else {
+    drupal_set_message(t('Please add Sensor to the system before trying to add observation.'), 'error');
+    $sensors_nid = NULL;
+  }
+//
+//  $tree = is_null($sensors_nid) ? array() : _WSNobservations_get_tree($sensors_nid);
+//  $parent_Observations = _WSNobservations_plain_tree($tree);
+//  $form['group1']['parent_nid'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Parent Observations'),
+//    
+//    '#default_value' => isset($node->parent_nid) ? $node->parent_nid : 0,
+//    '#options' => array(0 => '-') + $parent_Observations,
+//    '#prefix' => '<div id="WSNobservations-parent-nid">',
+//    '#suffix' => '</div>',
+//  );
+
+//  $form['group1']['weight'] = array(
+//    '#type' => 'weight',
+//    '#title' => t('Weight'),
+//    '#default_value' => isset($node->weight) ? $node->weight : 0,
+//  );
+//
+//  $form['group1']['stepno'] = array(
+//    '#type' => 'textfield',
+//    '#title' => t('Step no.'),
+//    '#size' => 15,
+//    '#required' => FALSE,
+//    '#default_value' => isset($node->stepno) ? $node->stepno : NULL,
+//  );
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+    '#weight' => $info['title']['weight'],
+  );
+
+  $form['group2'] = array(
+    '#type' => 'markup',
+    '#theme' => 'WSN_form_group',
+    '#weight' => $info['group2']['weight'],
+  );
+  
+  $form['group2']['datetime'] = array(
+    '#type' => 'date_text',
+    '#date_format' => 'Y-m-d H:i',
+    '#title' => t('Date Time'),
+    '#withnull' => TRUE,
+    '#default_value' => isset($node->datetime) ? $node-> datetime : time(),
+    
+  );
+  $form['group3'] = array(
+    '#type' => 'markup',
+    '#theme' => 'WSN_form_group',
+    '#weight' => $info['group3']['weight'],
+  );
+  
+  $form['group3']['value'] = array(
+    '#title' => t('Value'),
+    '#type' => 'textfield',
+    '#size' => 20,
+    '#default_value' => isset($node->value) ? $node->value : NULL,
+  );
+  
+//  $Observationscategory_list = WSN_attributes_bydomain('Observations category');
+//  $form['group2']['Observationscategory'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Category'),
+//    '#default_value' => $node->Observationscategory,
+//    '#options' => $Observationscategory_list['values'],
+//  );
+  
+//    $form['group4'] = array(
+//    '#type' => 'markup',
+//    '#theme' => 'WSN_form_group',
+//    '#weight' => $info['group4']['weight'],
+//    );
+
+    $observationCategory_list = WSN_attributes_bydomain('Observation Category');
+    $form['group3']['observationCategory'] = array(
+      '#type' => 'select',
+      '#title' => t('Observation Category'),
+      '#default_value' => $node->observationCategory,
+      '#options' => $observationCategory_list['values'],
+    );
+
+    $observationError_list = WSN_attributes_bydomain('Observation Error');
+    $form['group3']['observationError'] = array(
+      '#type' => 'select',
+      '#title' => t('Observation Error'),
+      '#default_value' => $node->observationError,
+      '#options' => $observationError_list['values'],
+    );
+
+//  $form['group3'] = array(
+//    '#type' => 'markup',
+//    '#theme' => 'WSN_form_group',
+//    '#weight' => $info['group3']['weight'],
+//  );
+
+//  $form['group3']['datetime'] = array(
+//    '#type' => 'dateext',
+//    '#title' => t('Date time'),
+//    '#withnull' => TRUE,
+//    '#default_value' => isset($node->datetime) ? $node->datetime : time(),
+//  );
+
+//  $form['group3']['dateend'] = array(
+//    '#type' => 'dateext',
+//    '#title' => t('Date end'),
+//    '#withnull' => TRUE,
+//    '#default_value' => isset($node->dateend) ? $node->dateend : time(),
+//  );
+//
+//  $durationunit_list = WSN_attributes_bydomain('Duration unit');
+//  $form['group3']['durationunit'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Duration unit'),
+//    '#default_value' => $node->durationunit,
+//    '#options' => $durationunit_list['values'],
+//  );
+//
+//  $form['group3']['duration'] = array(
+//    '#type' => 'textfield',
+//    '#title' => t('Duration'),
+//    '#size' => 20,
+//    '#default_value' => isset($node->duration) ? $node->duration : NULL,
+//  );
+//
+//  $form['group4'] = array(
+//    '#type' => 'markup',
+//    '#theme' => 'WSN_form_group',
+//    '#weight' => $info['group4']['weight'],
+//  );
+//
+//  $pricemode_list = WSN_attributes_bydomain('Price mode');
+//  $form['group4']['pricemode'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Price mode'),
+//    '#default_value' => $node->pricemode,
+//    '#options' => $pricemode_list['values'],
+//  );
+//
+//  $form['group4']['price'] = array(
+//    '#title' => t('Price'),
+//    '#type' => 'textfield',
+//    '#size' => 15,
+//    '#default_value' => isset($node->price) ? $node->price : NULL,
+//  );
+//
+//  $currency_list = WSN_attributes_bydomain('Currency');
+//  $form['group4']['currency'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Price currency'),
+//    '#default_value' => $node->currency,
+//    '#options' => $currency_list['values'],
+//  );
+//
+//  $form['group5'] = array(
+//    '#type' => 'markup',
+//    '#theme' => 'WSN_form_group',
+//    '#weight' => $info['group5']['weight'],
+//  );
+//
+//  $options = WSN_get_assignment_options($sites_nid, $sensors_nid);
+//
+//  $assigned_nid = isset($form_state['values']['assigned_nid']) ? $form_state['values']['assigned_nid'] : (isset($node->assigned_nid) ? $node->assigned_nid : 0);
+//
+//  $form['group5']['assigned_nid'] = array(
+//    '#type' => 'select',
+//    '#title' => t('Assigned to'),
+//    '#options' => $options,
+//    '#default_value' => $assigned_nid,
+//  );
+//
+//  $form['group6'] = array(
+//    '#type' => 'markup',
+//    '#theme' => 'WSN_form_group',
+//    '#weight' => $info['group6']['weight'],
+//  );
+//
+//  $form['group6']['billable'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Billable'),
+//    '#default_value' => isset($node->billable) ? $node->billable : variable_get('WSNobservations_billable_default', FALSE),
+//    '#weight' => 1,
+//  );
+//
+//  $form['group6']['billed'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Billed'),
+//    '#default_value' => isset($node->billed) ? $node->billed : FALSE,
+//    '#weight' => 2,
+//  );
+
+  // Check to see if the body field is still there, if so, display it.
+  $body = field_get_items('WSNobservations', $node, 'body');
+  if ($body) {
+    $form['body_field'] = $body;
+  }
+
+//  $form['stepno_old'] = array(
+//    '#type' => 'hidden',
+//    '#default_value' => isset($node->stepno_old) ? $node->stepno_old : NULL,
+//  );
+
+  $form['title_old'] = array(
+    '#type' => 'hidden',
+    '#default_value' => isset($node->title_old) ? $node->title_old : NULL,
+  );
+
+  return $form;
+}
+
+/**
+ * Ajax callback for the WSNobservations node form.
+ */
+function WSNobservations_form_ajax(&$form, &$form_state) {
+  return $form;
+}
+
+/**
+ * Implements hook_insert().
+ */
+function WSNobservations_insert($node) {
+  _WSNobservations_beforesave($node);
+
+  db_insert('WSNobservations')
+    ->fields(array(
+      'vid' => $node->vid,
+      'nid' => $node->nid,
+      'value'   => $node->value,
+      'datetime'  => $node->datetime,
+      
+      'observationCategory' => $node->observationCategory,
+      'observationError' => $node->observationError,
+      
+      'sites_nid' => $node->sites_nid,
+      'sites_title' => $node->sites_title,
+      'nodes_nid' => $node->nodes_nid,
+      'nodes_title' => $node->nodes_title,
+      'sensors_nid' => $node->sensors_nid,
+      'sensors_title' => $node->sensors_title,
+//      'parent_nid' => $node->parent_nid,
+//      'weight' => $node->weight,
+//      'datebegin' => $node->datebegin,
+//      'dateend' => $node->dateend,
+//      'durationunit' => $node->durationunit,
+//      'duration' => $node->duration,
+//      'pricemode' => $node->pricemode,
+//      'price' => $node->price,
+//      'currency' => $node->currency,
+//      'assigned_nid' => $node->assigned_nid,
+//      'assigned_title' => $node->assigned_title,
+//      'billable' => $node->billable,
+//      'billed' => $node->billed,
+    ))
+    ->execute();
+}
+
+/**
+ * Implements hook_update().
+ */
+function WSNobservations_update($node) {
+  $sites_query = db_select('node', 'n');
+  $sites_query->join('WSNsites', 'sor', 'n.vid = sor.vid');
+  $sites_result = $sites_query
+    ->fields('n', array('title'))
+    ->condition('n.type', 'WSNsites')
+    ->condition('n.nid', $node->sites_nid)
+    ->execute();
+
+  $s = $sites_result->fetchObject();
+  $node->sites_title = $s->title;
+
+  $node_query = db_select('node', 'n');
+  $node_query->join('WSNnodes', 'spr', 'n.vid = spr.vid');
+  $node_result = $node_query
+    ->fields('n', array('title'))
+    ->condition('n.type', 'WSNnodes')
+    ->condition('n.nid', $node->nodes_nid)
+    ->execute();
+
+  $n = $node_result->fetchObject();
+  $node->nodes_title = $n->title;
+  
+  $sensor_query = db_select('node', 'n');
+  $sensor_query->join('WSNsensors', 'spr', 'n.vid = spr.vid');
+  $sensor_result = $sensor_query
+    ->fields('n', array('title'))
+    ->condition('n.type', 'WSNsensors')
+    ->condition('n.nid', $node->sensors_nid)
+    ->execute();
+
+  $p = $sensor_result->fetchObject();
+  $node->sensors_title = $p->title;
+
+  if ($node->sensors_nid != $node->sensors_nid_old) {
+    module_invoke_all('WSNobservations_change_hierarchy', $node->nid, $node->sites_nid, $node->nodes_title, $node->nodes_nid, $node->sites_title, $node->sensors_nid, $node->sensors_title);
+  }
+  // if this is a new node or we're adding a new revision,
+  if ($node->revision) {
+    WSNobservations_insert($node);
+  }
+  else {
+    _WSNobservations_beforesave($node);
+
+  db_update('WSNobservations')
+    ->fields(array(
+      //'stepno' => $node->stepno,
+      'observationCategory' => $node->observationCategory,
+      //'Observationstatus' => $node->Observationstatus,
+      'observationError' => $node->observationError,
+      
+      'value' => $node->value,
+      'datetime' => $node->datetime,
+      
+      'sites_nid' => $node->sites_nid,
+      'sites_title' => $node->sites_title,
+      'nodes_nid' => $node->nodes_nid,
+      'nodes_title' => $node->nodes_title,
+      'sensors_nid' => $node->sensors_nid,
+      'sensors_title' => $node->sensors_title,
+
+//      'parent_nid' => $node->parent_nid,
+//      'weight' => $node->weight,
+        
+//      'datebegin' => $node->datebegin,
+//      'dateend' => $node->dateend,
+//      'durationunit' => $node->durationunit,
+//      'duration' => $node->duration,
+//      'pricemode' => $node->pricemode,
+//      'price' => $node->price,
+//      'currency' => $node->currency,
+//      'assigned_nid' => $node->assigned_nid,
+//      'assigned_title' => $node->assigned_title,
+//      'billable' => $node->billable,
+//      'billed' => $node->billed,
+    ))
+    ->condition('vid', $node->vid)
+    ->execute();
+//    if (($node->title != $node->title_old) || ($node->stepno != $node->stepno_old)) {
+    if (($node->title != $node->title_old)) {
+      //module_invoke_all('WSNobservations_change', $node->nid, $node->title, $node->stepno);
+      module_invoke_all('WSNobservations_change', $node->nid, $node->title);
+    }
+  }
+}
+
+/**
+ * Prepares WSNobservations for saving.
+ */
+function _WSNobservations_beforesave(&$node) {
+  $sites_query = db_select('node', 'n');
+  $sites_query->join('WSNsites', 'sor', 'n.vid = sor.vid');
+  $sites_result = $sites_query
+    ->fields('n', array('title'))
+    ->condition('n.type', 'WSNsites')
+    ->condition('n.nid', $node->sites_nid)
+    ->execute();
+
+  $s = $sites_result->fetchObject();
+  $node->sites_title = $s->title;
+
+  $node_query = db_select('node', 'n');
+  $node_query->join('WSNnodes', 'spr', 'n.vid = spr.vid');
+  $node_result = $node_query
+    ->fields('n', array('title'))
+    ->fields('spr', array('Sites_title'))
+    ->condition('n.type', 'WSNnodes')
+    ->condition('n.nid', $node->nodes_nid)
+    ->execute();
+
+  $n = $node_result->fetchObject();
+  $node->nodes_title = $n->title;
+  
+  
+  $sensor_query = db_select('node', 'n');
+  $sensor_query->join('WSNsensors', 'sse', 'n.vid = sse.vid');
+  $sensor_result = $sensor_query
+    ->fields('n', array('title'))
+    ->fields('sse', array('Nodes_title'))
+    ->condition('n.type', 'WSNsensors')
+    ->condition('n.nid', $node->sensors_nid)
+    ->execute();
+
+  $p = $sensor_result->fetchObject();
+  $node->sensors_title = $p->title;
+
+//  $assigned = node_load($node->assigned_nid);
+//  $node->assigned_title = isset($assigned->title) ? $assigned->title : NULL;
+
+//  // Allow use of comma when inputting numerical values - str_replace with period decimal
+//  $node->duration = floatval(str_replace(',', '.', $node->duration));
+//  $node->price = floatval(str_replace(',', '.', $node->price));
+
+  // Allow use of comma when inputting numerical values - str_replace with period decimal
+//  $node->duration = floatval(str_replace(',', '.', $node->duration));
+//  $node->price = floatval(str_replace(',', '.', $node->price));
+//  
+  
+  if (is_array($node->datetime)) {
+      $node->datetime = _WSN_date_to_gmtimestamp($node->datetime);
+  }
+  else {
+      $node->datetime = strtotime($node->datetime);
+  }
+
+//  if (is_array($node->dateend)) {
+//      $node->dateend = _WSN_date_to_gmtimestamp($node->dateend);
+//  }
+//  else {
+//      $node->dateend = strtotime($node->dateend);
+//  }
+}
+
+/**
+ * Implements hook_node_prepare().
+ */
+function WSNobservations_node_prepare($node) {
+  if (!isset($node->nid)) {
+    $node->iscustomer = 1;
+    $node->isactive = 1;
+
+    $observationCategory_list = WSN_attributes_bydomain('Observation Category');
+    $node->observationCategory = $observationCategory_list['default'];
+
+//    $observationstatus_list = WSN_attributes_bydomain('Observations status');
+//    $node->observationstatus = $observationstatus_list['default'];
+
+    $observationError_list = WSN_attributes_bydomain('Observation Error');
+    $node->observationError = $observationError_list['default'];
+
+//    $durationunit_list = WSN_attributes_bydomain('Duration unit');
+//    $node->durationunit = $durationunit_list['default'];
+//
+//    $pricemode_list = WSN_attributes_bydomain('Price mode');
+//    $node->pricemode = $pricemode_list['default'];
+//
+//    $currency_list = WSN_attributes_bydomain('Currency');
+//    $node->currency = $currency_list['default'];
+  }
+}
+
+/**
+ * Implements hook_node_revision_delete().
+ */
+function WSNobservations_node_revision_delete($node) {
+  // Notice that we're matching a single revision based on the node's vid.
+  db_delete('WSNobservations')
+    ->condition('vid', $node->vid)
+    ->execute();
+}
+
+/**
+ * Implements hook_delete().
+ */
+function WSNobservations_delete($node) {
+  // Notice that we're matching all revision, by using the node's nid.
+  db_delete('WSNobservations')
+    ->condition('nid', $node->nid)
+    ->execute();
+}
+
+/**
+ * Implements hook_load().
+ */
+function WSNobservations_load($nodes) {
+  foreach ($nodes as $nid => &$node) {
+    $result = db_select('WSNobservations', 'sta')
+      ->fields('sta')
+      ->condition('vid', $node->vid)
+      ->execute();
+    $record = $result->fetchAssoc();
+
+    foreach ($record as $key => $value) {
+      $node->$key = $value;
+    }
+
+    $node->title_old = $node->title;
+//    $node->stepno_old = isset($node->stepno) ? $node->stepno : NULL;
+  }
+}
+
+/**
+ * Implements hook_validate().
+ */
+function WSNobservations_validate(&$node) {
+//  if (($node->nid == $node->parent_nid) && $node->parent_nid) {
+//    form_set_error('parent_nid', t('Impossible to assign itself as parent.'));
+//  }
+}
+
+/**
+ * Implements hook_view().
+ */
+function WSNobservations_view($node, $view_mode) {
+  $breadcrumb = array();
+  $breadcrumb[] = l(t('WSN'), 'WSN');
+  $breadcrumb[] = l(t('observations'), 'WSN/observations');
+  drupal_set_breadcrumb($breadcrumb);
+
+  return theme('WSNobservations_view', array('node' => $node, 'view_mode' => $view_mode));
+}
+
+/**
+ * Determines whether the observations tab of a sensor is visible.
+ */
+function _WSNobservations_Observations_access($node=NULL) {
+  if ($node == NULL) return FALSE;
+  if ($node->type == 'WSNsensors' && user_access('WSN Observations: access')) return TRUE;
+  return FALSE;
+}
+
+/**
+ * Provides a tree of Oobservations for a given sensor and (if selected) parent observations.
+ */
+//function _WSNobservations_get_tree($sensors_nid, $parent_nid = 0, $depth = -1, $max_depth = NULL, $where = NULL, $args = array()) {
+//  static $children, $parents, $Observations;
+//
+//  $depth++;
+//  // We cache trees, so it's not CPU-intensive to call get_tree() on a term
+//  // and its children, too.
+//  if (!isset($children[$sensors_nid])) {
+//    $children[$sensors_nid] = array();
+//
+//    $args = array_merge($args, array($sensors_nid));
+//
+//    $query = db_select('node', 'n');
+//    $query->join('WSNobservations', 'WSNta', 'n.vid = WSNta.vid');
+//    $query
+//      ->fields('n', array('title', 'uid'))
+//      ->fields('WSNta')
+//      ->condition('n.status', 1)
+//      ->condition('n.type', 'WSNobservations')
+//      ->condition('WSNta.sensors_nid', $args)
+//      ->addTag('node_access')
+//      ->orderBy('WSNta.weight', 'ASC');
+//    $result = $query->execute();
+//
+//    foreach ($result as $Observations) {
+//      $children[$sensors_nid][$Observations->parent_nid][] = $Observations->nid;
+//      $parents[$sensors_nid][$Observations->nid][] = $Observations->parent_nid;
+//      $Observations[$sensors_nid][$Observations->nid] = $Observations;
+//    }
+//  }
+
+//  $max_depth = (is_null($max_depth)) ? count($children[$sensors_nid]) : $max_depth;
+//  if (isset($children[$sensors_nid][$parent_nid]) && $children[$sensors_nid][$parent_nid]) {
+//    foreach ($children[$sensors_nid][$parent_nid] as $child_nid) {
+//      if ($max_depth > $depth) {
+//        $Observations = clone($Observations[$sensors_nid][$child_nid]);
+//        $Observations->depth = $depth;
+//        $Observations->parents = $parents[$sensors_nid][$child_nid];
+//        $tree[] = $Observations;
+//        if (isset($children[$sensors_nid][$child_nid])) {
+//          $tree = array_merge($tree, _WSNobservations_get_tree($sensors_nid, $child_nid, $depth, $max_depth, $where, $args));
+//        }
+//      }
+//    }
+//  }
+//  return isset($tree) ? $tree : array();
+//}
+
+/**
+ * Provides Observations details for Observations within a tree.
+ */
+function _WSNobservations_plain_tree($tree) {
+  $rows = array();
+//  foreach ($tree as $item) {
+//    $nid = $item->nid;
+//    $title = check_plain($item->title);
+//    if ($item->stepno) $title = check_plain($item->stepno) . ' ' . $title;
+//    if ($nid) $rows[$nid] = str_repeat('--', $item->depth) . ' ' . $title;
+//  }
+  return $rows;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function WSNobservations_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'WSNobservations'),
+  );
+}
+
+/**
+ * Creates an invoice based on a selected Observation.
+ */
+//function WSNobservations_WSNinvoice_auto_add($node, $invoice_nid = NULL) {
+//  if (!module_exists('WSNinvoice')) {
+//    drupal_set_message(t('This function should only be called from within WSN Invoice'));
+//    return;
+//  }
+//  elseif ($node->billed) {
+//    drupal_set_message(t('This Observations has already been billed!'));
+//    return;
+//  }
+//  elseif (!$node->billable) {
+//    drupal_set_message(t('This Observations is marked unbillable!'));
+//    return;
+//  }
+//  else {
+//    global $user;
+//
+//    if (!$invoice_nid) {
+//
+//      $new_invoice = new StdClass;
+//
+//      // Code copied with edits from node form
+//      $new_invoice->requestdate = time();
+//      $new_invoice->duedate = $new_invoice->requestdate + (variable_get('WSNinvoice_payment_days', 30) * 86400);
+//      $new_invoice->number = WSNinvoice_get_invoice_number($new_invoice->requestdate);
+//
+//      $new_invoice->title = $node->title;
+//      $new_invoice->uid = $user->uid;
+//      $new_invoice->type = 'WSNinvoice';
+//      // $new_invoice->reference
+//      $new_invoice->sites_nid = $node->sites_nid;
+//      $new_invoice->sites_title = $node->sites_title;
+//      $new_invoice->sensors_nid = $node->sensors_nid;
+//      $new_invoice->sensors_title = $node->sensors_title;
+//      // $new_invoice->amount
+//      // $new_invoice->tax
+//      // $new_invoice->total
+//      // $new_invoice->totalcustomercurr
+//      // $new_invoice->taxexempt
+//      $new_invoice->src_nid = $node->nid;
+//      $new_invoice->src_vid = $node->vid;
+//
+//      node_save($new_invoice);
+//      $invoice_nid = $new_invoice->nid;
+//    }
+//    else {
+//      $new_invoice = node_load($invoice_nid);
+//    }
+//
+//    $rate_array = array('pricemode_used' => '', 'rate_to_use' => 0);
+//
+//    $rate_array = WSNinvoice_get_rate($node);
+//
+//    $count = count($new_invoice->items);
+//
+//    $new_invoice->items[$count]->description = WSNinvoice_get_item_desc($rate_array, $node);
+//
+//    $new_invoice->items[$count]->amount = WSNinvoice_get_item_amount($rate_array, $node);
+//
+//    // Tax percent simply uses default at the moment
+//    $new_invoice->items[$count]->tax1percent = variable_get('WSN_tax1_percent', 20);
+//    // $new_invoice_item->items[$count]->tax1
+//    // $new_invoice_item->items[$count]->total
+//    $new_invoice->items[$count]->src_nid = $node->nid;
+//    $new_invoice->items[$count]->src_vid = $node->vid;
+//
+//    WSN_taxation($new_invoice->items[$count]);
+//    WSNinvoice_update($new_invoice);
+//  }
+//
+//  // Mark Observations as billed.
+//  db_query("UPDATE {WSNobservations} SET billed=%d WHERE vid=%d", 1, $node->vid);
+//
+//  return $invoice_nid;
+//}
+
+/**
+ * Implements hook_token_list().
+ */
+function WSNobservations_token_list($type='all') {
+  $tokens = array();
+  if (($type == 'node') || ($type == 'all')) {
+//    $tokens['node']['WSNobservations-step-no'] = t('WSN Observations: Step No.');
+    $tokens['node']['WSNobservations-sites-nid'] = t('WSN Observations: sites Node ID.');
+    $tokens['node']['WSNobservations-sites-title'] = t('WSN Observations: sites Title.');
+    $tokens['node']['WSNobservations-nodes-nid'] = t('WSN Observations: nodes Node ID.');
+    $tokens['node']['WSNobservations-nodes-title'] = t('WSN Observations: nodes Title.');
+    $tokens['node']['WSNobservations-sensors-nid'] = t('WSN Observations: sensors Node ID.');
+    $tokens['node']['WSNobservations-sensors-title'] = t('WSN Observations: sensors Title.');
+//    $tokens['node']['WSNobservations-parent-nid'] = t('WSN Observations: Parent NID.');
+//    $tokens['node']['WSNobservations-Observationstatus'] = t('WSN Observations: sensors Status.');
+    $tokens['node']['WSNobservations-ObservationCategory'] = t('WSN Observations: Observation Category.');
+    $tokens['node']['WSNobservations-ObservationError'] = t('WSN Observations: Observation error.');
+    
+    $tokens['node']['WSNobservations-datetime'] = t('WSN Observations: Observations Date Time.');
+    $tokens['node']['WSNobservations-value'] = t('WSN Observations: Value.');
+//    $tokens['node']['WSNobservations-durationunit'] = t('WSN Observations: Observations Duration Unit.');
+//    $tokens['node']['WSNobservations-duration'] = t('WSN Observations: Observations Duration.');
+//    $tokens['node']['WSNobservations-datebegin'] = t('WSN Observations: Observations Begin Date.');
+//    $tokens['node']['WSNobservations-dateend'] = t('WSN Observations: Observations End Date.');
+//    $tokens['node']['WSNobservations-billable'] = t('WSN Observations: Observations Billable.');
+//    $tokens['node']['WSNobservations-billed'] = t('WSN Observations: Observations Billed.');
+//    $tokens['node']['WSNobservations-price'] = t('WSN Observations: Observations Price.');
+//    $tokens['node']['WSNobservations-pricemode'] = t('WSN Observations: Observations Price Mode.');
+//    if (module_exists('WSNperson')) {
+//      // Assignee(s)
+//      $tokens['node']['WSNobservations-assigned-to-email'] = t('WSN Observations: Observations Assignee(s) Email Address(s).');
+//      $tokens['node']['WSNobservations-assigned-title'] = t('WSN Observations: Observations Assignee(s) Title(s).');
+//    }
+  }
+  return $tokens;
+}
+
+/**
+ * Implements hook_token_values().
+ */
+function WSNobservations_token_values($type, $object = NULL) {
+  $values = array();
+  $node = $object;
+  if ((($type == 'node') || ($type == 'all')) && ($node->type === 'WSNobservations')) {
+    $values['WSNobservations-stepno'] = $node->stepno;
+    $values['WSNobservations-sites-nid'] = $node->sites_nid;
+    $values['WSNobservations-sites-title'] = $node->sites_title;
+    $values['WSNobservations-nodes-nid'] = $node->nodes_nid;
+    $values['WSNobservations-nodes-title'] = $node->nodes_title;
+    $values['WSNobservations-sensors-nid'] = $node->sensors_nid;
+    $values['WSNobservations-sensors-title'] = $node->sensors_title;
+//    $values['WSNobservations-parent-nid'] = $node->parent_nid;
+//    $values['WSNobservations-Observationstatus'] = $node->Observationstatus;
+    $values['WSNobservations-observationCategory'] = $node->observationCategory;
+    $values['WSNobservations-observationError'] = $node->observationError;
+    
+    $values['WSNobservations-value'] = $node->value;
+    $values['WSNobservations-datetime'] = format_date($node->datetime, 'medium', '', variable_get('date_default_timezone', NULL));
+//    $values['WSNobservations-durationunit'] = $node->durationunit;
+//    $values['WSNobservations-duration'] = $node->duration;
+//    $values['WSNobservations-datebegin'] = format_date($node->datebegin, 'medium', '', variable_get('date_default_timezone', NULL));
+//    $values['WSNobservations-dateend'] = format_date($node->dateend, 'medium', '', variable_get('date_default_timezone', NULL));
+//    $values['WSNobservations-price'] = $node->price;
+//    $values['WSNobservations-pricemode'] = $node->pricemode;
+//    $values['WSNobservations-billable'] = $node->billable;
+//    $values['WSNobservations-billed'] = $node->billed;
+//    if (module_exists('WSNperson')) {
+//      // sensors Assignee(s) e-mail
+//      if ($node->assigned_nid) {
+//        $values['WSNobservations-assigned-title'] = $node->assigned_title;
+//        $assignees_node = node_load($node->assigned_nid);
+//        // Assigned to one person
+//        if ($assignees_node->type === 'WSNperson') {
+//          $values['WSNobservations-assigned-to-email'] = WSNperson_primary_email($assignees_node);
+//        }
+//        // Assigned to a team
+//        else {
+//          $assignees_array = $assignees_node->members_array;
+//          $assignees = array();
+//          foreach ($assignees_array as $nid => $name) {
+//            $assignee = node_load($nid);
+//            $assignees[] = WSNperson_primary_email($assignee);
+//          }
+//          $assigned = implode(", ", $assignees);
+//          // Return comma separated list of emails
+//          $values['WSNobservations-assigned-to-email'] = $assigned;
+//        }
+//      }
+//      else {
+//        $values['WSNobservations-assigned-to-email'] = NULL;
+//      }
+//    }
+  }
+  return $values;
+}
+
+/**
+ * Implements  hook_node_access_records().
+ */
+function WSNobservations_node_access_records($node) {
+  if (empty($node->status)) {
+    // Lets Drupal take care of permission to unpublished nodes.
+    return array();
+  }
+  $type = is_string($node) ? $node : $node->type;
+  $grants = array();
+  if ($type == 'WSNobservations') {
+    // WSN Observations: view all
+    $grants[] = array(
+      'realm' => 'WSNobservations_view_all',
+      'gid' => 0,
+      'grant_view' => 1,
+      'grant_update' => 0,
+      'grant_delete' => 0,
+      'error' => 0,
+    );
+    // WSN Observations: view own
+    $grants[] = array(
+      'realm' => 'WSNobservations_view_own',
+      'gid' => $node->uid,
+      'grant_view' => 1,
+      'grant_update' => 0,
+      'grant_delete' => 0,
+      'error' => 0,
+    );
+    // WSN Observations: view of user sites
+    if ( isset($node->sites_nid) && !empty($node->sites_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_view_if_user_sites',
+        'gid' => $node->sites_nid,
+        'grant_view' => 1,
+        'grant_update' => 0,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+    // WSN Observations: view of user nodes
+    if ( isset($node->nodes_nid) && !empty($node->nodes_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_view_if_user_nodes',
+        'gid' => $node->nodes_nid,
+        'grant_view' => 1,
+        'grant_update' => 0,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+        // WSN Observations: view of user nodes
+    if ( isset($node->sensors_nid) && !empty($node->sensors_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_view_if_user_sensors',
+        'gid' => $node->sensors_nid,
+        'grant_view' => 1,
+        'grant_update' => 0,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+    
+    
+    // WSN Observations: view if assigned to observations
+//    if ( isset($node->assigned_nid) && !empty($node->assigned_nid)) {
+//      $grants[] = array(
+//        'realm' => 'WSNobservations_view_if_assigned',
+//        'gid' => $node->assigned_nid,
+//        'grant_view' => 1,
+//        'grant_update' => 0,
+//        'grant_delete' => 0,
+//        'error' => 0,
+//      );
+//    }
+
+    // WSN Observations: edit all
+    $grants[] = array(
+      'realm' => 'WSNobservations_update_all',
+      'gid' => 0,
+      'grant_view' => 0,
+      'grant_update' => 1,
+      'grant_delete' => 0,
+      'error' => 0,
+    );
+    // WSN Observations: edit own
+    $grants[] = array(
+      'realm' => 'WSNobservations_update_own',
+      'gid' => $node->uid,
+      'grant_view' => 0,
+      'grant_update' => 1,
+      'grant_delete' => 0,
+      'error' => 0,
+    );
+    // WSN Observations: edit of user sites
+    if ( isset($node->sites_nid) && !empty($node->sites_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_update_if_user_sites',
+        'gid' => $node->sites_nid,
+        'grant_view' => 0,
+        'grant_update' => 1,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+    // WSN Observations: edit of user nodes
+    if ( isset($node->nodes_nid) && !empty($node->nodes_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_update_if_user_nodes',
+        'gid' => $node->nodes_nid,
+        'grant_view' => 0,
+        'grant_update' => 1,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+        if ( isset($node->sensors_nid) && !empty($node->sensors_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_update_if_user_sensors',
+        'gid' => $node->sensors_nid,
+        'grant_view' => 0,
+        'grant_update' => 1,
+        'grant_delete' => 0,
+        'error' => 0,
+      );
+    }
+    // WSN Observations: edit if assigned to Observations
+//    if ( isset($node->assigned_nid) && !empty($node->assigned_nid)) {
+//      $grants[] = array(
+//        'realm' => 'WSNobservations_update_if_assigned',
+//        'gid' => $node->assigned_nid,
+//        'grant_view' => 0,
+//        'grant_update' => 1,
+//        'grant_delete' => 0,
+//        'error' => 0,
+//      );
+//    }
+    // WSN Observations: delete all
+    $grants[] = array(
+      'realm' => 'WSNobservations_delete_all',
+      'gid' => 0,
+      'grant_view' => 0,
+      'grant_update' => 0,
+      'grant_delete' => 1,
+      'error' => 0,
+    );
+    // WSN Observations: delete own
+    $grants[] = array(
+      'realm' => 'WSNobservations_delete_own',
+      'gid' => $node->uid,
+      'grant_view' => 0,
+      'grant_update' => 0,
+      'grant_delete' => 1,
+      'error' => 0,
+    );
+    // WSN Observations: delete of user sites
+    if ( isset($node->sites_nid) && !empty($node->sites_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_delete_if_user_sites',
+        'gid' => $node->sites_nid,
+        'grant_view' => 0,
+        'grant_update' => 0,
+        'grant_delete' => 1,
+        'error' => 0,
+      );
+    }
+    // WSN Observations: delete of user nodes
+    if ( isset($node->nodes_nid) && !empty($node->nodes_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_delete_if_user_nodes',
+        'gid' => $node->nodes_nid,
+        'grant_view' => 0,
+        'grant_update' => 0,
+        'grant_delete' => 1,
+        'error' => 0,
+      );
+    }
+    
+        // WSN Observations: delete of user sensors
+    if ( isset($node->sensors_nid) && !empty($node->sensors_nid)) {
+      $grants[] = array(
+        'realm' => 'WSNobservations_delete_if_user_sensors',
+        'gid' => $node->sensors_nid,
+        'grant_view' => 0,
+        'grant_update' => 0,
+        'grant_delete' => 1,
+        'error' => 0,
+      );
+    }
+    
+    
+    // WSN Observations: delete if assigned to Observations
+//    if ( isset($node->assigned_nid) && !empty($node->assigned_nid)) {
+//      $grants[] = array(
+//        'realm' => 'WSNobservations_delete_if_assigned',
+//        'gid' => $node->assigned_nid,
+//        'grant_view' => 0,
+//        'grant_update' => 0,
+//        'grant_delete' => 1,
+//        'error' => 0,
+//      );
+//    }
+  }
+  return $grants;
+}
+
+/**
+ * Implements hook_node_grants().
+ */
+function WSNobservations_node_grants($account, $op) {
+
+//  if (module_exists('WSNperson')) {
+//    _WSNperson_user_load($account);
+//    if (!empty($account->WSNteam) AND is_array($account->WSNteam)) {
+//      $assigned_nids = $account->WSNteam;
+//    }
+//    if (isset($account->WSNperson_nid) AND !empty($account->WSNperson_nid)) {
+//      $assigned_nids[] = $account->WSNperson_nid;
+//    }
+//  }
+  $grants = array();
+  switch ($op) {
+    case 'view':
+      if (user_access('WSN Observations: view all', $account)) {
+        $grants['WSNobservations_view_all'] = array(0);
+      }
+      if (user_access('WSN Observations: view own', $account)) {
+        $grants['WSNobservations_view_own'] = array($account->uid);
+      }
+      if (user_access('WSN Observations: view of user sites', $account) AND !empty($account->WSNsites_nid)) {
+        $grants['WSNobservations_view_if_user_sites'] = array($account->WSNsites_nid);
+      }
+      if (user_access('WSN Observations: view of user nodes', $account) AND !empty($account->WSNnodes_nid)) {
+        $grants['WSNobservations_view_if_user_nodes'] = array($account->WSNnodes_nid);
+      }
+      if (user_access('WSN Observations: view of user sensors', $account) AND !empty($account->WSNsensors_nid)) {
+        $grants['WSNobservations_view_if_user_sensors'] = array($account->WSNsensors_nid);
+      }
+//      if (isset($account->WSNperson_nid)) {
+//        if (user_access('WSN Observations: view if assigned to Observations', $account)) {
+//          $grants['WSNobservations_view_if_assigned'] = $assigned_nids;
+//        }
+//      }
+      break;
+
+    case 'update':
+      if (user_access('WSN Observations: edit all', $account)) {
+        $grants['WSNobservations_update_all'] = array(0);
+      }
+      if (user_access('WSN Observations: edit own', $account)) {
+        $grants['WSNobservations_update_own'] = array($account->uid);
+      }
+      if (user_access('WSN Observations: edit of user sites', $account) AND !empty($account->WSNsites_nid)) {
+        $grants['WSNobservations_update_if_user_sites'] = array($account->WSNsites_nid);
+      }
+      if (user_access('WSN Observations: edit of user nodes', $account) AND !empty($account->WSNnodes_nid)) {
+        $grants['WSNobservations_update_if_user_nodes'] = array($account->WSNnodes_nid);
+      }
+      if (user_access('WSN Observations: edit of user sensors', $account) AND !empty($account->WSNsensors_nid)) {
+        $grants['WSNobservations_update_if_user_sensors'] = array($account->WSNsensors_nid);
+      }
+//      if (isset($account->WSNperson_nid)) {
+//        if (user_access('WSN Observations: edit if assigned to Observations', $account)) {
+//          $grants['WSNobservations_update_if_assigned'] = $assigned_nids;
+//        }
+//      }
+      break;
+
+    case 'delete':
+      if (user_access('WSN Observations: delete all', $account)) {
+        $grants['WSNobservations_delete_all'] = array(0);
+      }
+      if (user_access('WSN Observations: delete own', $account)) {
+        $grants['WSNobservations_delete_own'] = array($account->uid);
+      }
+      if (user_access('WSN Observations: delete of user sites', $account) AND !empty($account->WSNsites_nid)) {
+        $grants['WSNobservations_delete_if_user_sites'] = array($account->WSNsites_nid);
+      }
+      if (user_access('WSN Observations: delete of user nodes', $account) AND !empty($account->WSNnodes_nid)) {
+        $grants['WSNobservations_delete_if_user_nodes'] = array($account->WSNnodes_nid);
+      }
+            if (user_access('WSN Observations: delete of user sensors', $account) AND !empty($account->WSNsensors_nid)) {
+        $grants['WSNobservations_delete_if_user_sensors'] = array($account->WSNsensors_nid);
+      }
+//      if (isset($account->WSNperson_nid)) {
+//        if (user_access('WSN Observations: delete if assigned to Observations', $account)) {
+//          $grants['WSNobservations_delete_if_assigned'] = $assigned_nids;
+//        }
+//      }
+      break;
+  }
+  return $grants;
+}
+
+/**
+ * Implements hook_WSN_dashboard_links().
+ */
+function WSNobservations_WSN_dashboard_links($type) {
+  $links = array();
+  if ($type == 'page' || $type == 'block') {
+    $links[] = array(
+      'theme' => 'WSN_dashboard_link',
+      'title' => t('Observations'),
+      'icon' => 'WSNobservations',
+      'path' => 'WSN/Observations',
+      'params' => array(),
+      'node_type' => 'WSNobservations',
+      'add_type' => 'WSNobservations',
+      'map' => array(),
+      'weight' => 5,
+    );
+  }
+  return $links;
+}
