@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the WSN Platform feature.
+ */
+
+include_once 'wsn_platform.features.inc';

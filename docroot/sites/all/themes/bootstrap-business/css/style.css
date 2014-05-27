@@ -22,9 +22,9 @@ blockquote p { font-size: 14px; line-height: 160%; font-weight: 400; }
 
 img { display: block; height: auto; max-width: 100%; }
 
-#pre-header { color:#aaaaaa; }
+#pre-header { color:#FFA812; }
 
-#bottom-content { color: #ffffff; }
+#bottom-content { color: #222222; }
 
 ::-moz-selection { color: #ffffff; }
 
@@ -68,7 +68,7 @@ table tr.even, table tr.odd, th { background-color: transparent; border-bottom: 
 thead tr th, thead tr td, tbody tr th, tbody tr td { padding: 8px; line-height: 142%; vertical-align: top; }
 
 /*Layout*/
-#pre-header { top: 0; left: 0; width: 100%; z-index: 13; position: absolute; background-color: #333; }
+#pre-header { top: 0; left: 0; width: 100%; z-index: 13; position: absolute; background-color: #483D8B; }
 
 .logged-in #pre-header { padding-top: 64px; }
 
@@ -76,7 +76,7 @@ thead tr th, thead tr td, tbody tr th, tbody tr td { padding: 8px; line-height: 
 
 #header-top { background-color: #fcfcfc; border-bottom: 1px dashed #eaeaea; position: relative; z-index: 12; min-height: 50px; } 
 
-#header { background-color: #fcfcfc; border-bottom: 1px solid #eaeaea; position: relative; z-index: 5; padding: 40px 0; text-align: center; min-height: 130px; }
+#header { background-color: #483D8B; border-bottom: 1px solid #eaeaea; position: relative; z-index: 5; padding: 40px 0; text-align: center; min-height: 130px; }
 
 #main-navigation { background-color: #fcfcfc; position: relative; z-index: 11; -webkit-box-shadow: 0 2px 4px rgba(0,0,0,0.075), 0 10px 0 rgba(0,0,0,0.01);
 -moz-box-shadow: 0 2px 4px rgba(0,0,0,0.075), 0 10px 0 rgba(0,0,0,0.01); box-shadow: 0 2px 4px rgba(0,0,0,0.075), 0 10px 0 rgba(0,0,0,0.01); }
@@ -96,7 +96,7 @@ display: none; }
 
 #footer { background-color: #fcfcfc; border-top: 1px solid #eaeaea; border-bottom: 1px solid #eaeaea; margin-bottom: 1px; padding: 60px 0 30px; }
 
-#subfooter { background-color: #fcfcfc; border-top: 1px solid #eaeaea; padding: 40px 0 20px; text-align: center; margin-bottom: 20px; }
+#subfooter { background-color: #000000; border-top: 1px solid #eaeaea; padding: 40px 0 20px; text-align: center; margin-bottom: 20px; }
 
 .block { padding: 0 0 30px 0; clear: both; }
 
@@ -140,7 +140,7 @@ ul.menu { margin: 0; padding: 0; }
 
 ul.menu li { list-style-position: inside; padding: 15px 0 15px 0; margin:0; border-bottom: 1px dashed #ddd;}
 
-ul.menu li a { color: #999; font-size: 14px; line-height: 150%; display: inline-block; }
+ul.menu li a { color: #999; font-size: 16px; line-height: 200%; display: inline-block; }
 
 ul.menu li a:hover, ul.menu li a.active { text-decoration: none;}
 
@@ -224,11 +224,11 @@ position: absolute; top: 20px; right: 17px; font-size: 11px; font-weight: 400; }
 
 #logo img:hover { opacity: 0.8; filter: alpha(opacity=80); }
 
-#site-name a { font-size: 38px; font-weight: 700; line-height: 1em; margin: 0 0 10px; color: #444444; display: block;}
+#site-name a { font-size: 45px; font-weight: 700; line-height: 1em; margin: 0 0 10px; color: #FFA812; display: block;}
 
 #site-name a:hover { text-decoration: none; opacity: 0.8; filter: alpha(opacity=80); }
 
-#site-slogan { color: #999; font-size: 13px; font-weight: 300; line-height: 150%; margin:10px 0 10px 0; }
+#site-slogan { color: #FFFFFF ; font-size: 25px; font-weight: 500; line-height: 150%; margin:10px 0 10px 0; }
 
 /*node*/
 .node.node-teaser, .page-node- #content-wrapper, .page-contact #content-wrapper { background-color: #fcfcfc; border: 1px solid #eaeaea; margin-bottom: 30px; 
@@ -395,7 +395,7 @@ color: #000; position: relative; z-index: 1; height: 52px; margin: 0; padding: 1
 /*Recent Content block*/
 #block-node-recent .node-title a { color: #444444; font-size: 16px; font-weight: 700; }
 
-#bottom-content .node-title a { color: #ffffff; }
+#bottom-content .node-title a { color: #222222; }
 
 #pre-header .node-title a { color: #aaaaaa; }
 
@@ -525,7 +525,7 @@ left: 0; text-align: center; text-transform: uppercase; display: block; }
 }
 
 /*credits*/
-.credits { margin-bottom: 0; font-size: 0.9em; }
+.credits { color: #FFA812 ; margin-bottom: 0; font-size: 1.2em; }
 
 /*toggle control*/
 .toggle-control { width: 100%; position: relative; z-index: 13; }
