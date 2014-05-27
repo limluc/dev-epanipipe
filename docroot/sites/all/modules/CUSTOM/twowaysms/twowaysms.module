@@ -1,0 +1,394 @@
+<?php
+/**
+ * @file
+ * Simple gateway module for Drupal SMS Framework. Outbound+Inbound
+ *
+ * For inbound messaging you must configure your gateway to send messages to:
+ *  - http(s)://yourhost.example.com/sms/twowaysms/receiver
+ *
+ * @package sms
+ * @subpackage twowaysms
+ */
+
+
+/**
+ * Implements hook_gateway_info()
+ *
+ * @ingroup hooks
+ */
+function twowaysms_gateway_info() {
+  return array(
+    'twowaysms' => array(
+      'name'           => '2-waySMS Gateway',
+      'send'           => 'twowaysms_send',     
+      'configure form' => 'twowaysms_admin_form',
+      'receive' => TRUE,
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu()
+ *
+ * @ingroup hooks
+ */
+function twowaysms_menu() {
+  $items = array();
+  $items['sms/twowaysms/receiver'] = array(
+    'title' => '2-waySMS message receiver',
+    'page callback' => 'twowaysms_receive_message',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );  
+  $items['sms/twowaysms/status'] = array(
+    'title' => '2-waySMS receipt receiver',
+    'page callback' => 'twowaysms_status_message',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
+/**
+ * Configuration form for gateway module
+ *
+ * @param $configuration
+ *
+ * @return
+ *   Drupal form array
+ */
+function twowaysms_admin_form($configuration) {
+  $form['twowaysms_account'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Sender (outgoing messages)',
+    '#collapsible' => TRUE,
+  );
+  $form['twowaysms_account']['twowaysms_balance_base_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Base URL for checking balance'),
+    '#description' => t('Eg: http://www.2-waysms.com/my/api/balance.php'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#default_value' => $configuration['twowaysms_balance_base_url'],
+  );
+  $form['twowaysms_account']['twowaysms_balance_method'] = array(
+  '#type' => 'radios',
+  '#title' => t('HTTP method'),
+  '#default_value' => $configuration['twowaysms_balance_method'],
+  '#options' => array(
+    'GET' => 'GET',
+    'POST' => 'POST',
+  ),
+  );
+  $form['twowaysms_account']['twowaysms_token_value'] = array(
+    '#type' => 'textfield',
+    '#title' => t('token value'),
+    '#description' => t('the authentication token'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $configuration['twowaysms_token_value'],
+  );
+  $form['twowaysms_account']['twowaysms_gwnumber'] = array(
+    '#type' => 'textfield',
+    '#title' => t('phone value'),
+    '#description' => t('the gateway number'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $configuration['twowaysms_gwnumber'],
+  );
+ 
+  
+  $form['twowaysms_send'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Sender (outgoing messages)',
+    '#collapsible' => TRUE,
+  );
+  $form['twowaysms_send']['twowaysms_send_base_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Base URL for sending messages'),
+    '#description' => t('Eg: http://www.2-waysms.com/my/api/sms.php'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#default_value' => $configuration['twowaysms_send_base_url'],
+  );
+  $form['twowaysms_send']['twowaysms_send_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('HTTP method'),
+    '#default_value' => $configuration['twowaysms_send_method'],
+    '#options' => array(
+      'GET' => 'GET',
+      'POST' => 'POST',
+    ),
+  );
+
+  //incoming message setup
+  $form['twowaysms_receive'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Receiver (incoming messages)',
+    '#collapsible' => TRUE,
+  );
+  $form['twowaysms_receive']['twowaysms_recv_url'] = array(
+    '#type' => 'item',
+    '#title' => 'Target URL for the message receiver',
+    '#description' => t('http(s)://yourhost.example.com/sms/twowaysms/receiver'),
+    '#value' => url('sms/twowaysms/receiver', array('absolute' => TRUE)),
+  );
+  
+  //status setup
+  $form['twowaysms_message_status'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Receiver (status messages)',
+    '#collapsible' => TRUE,
+  );
+  $form['twowaysms_message_status']['twowaysms_recv_url'] = array(
+    '#type' => 'item',
+    '#title' => 'Target URL for the message receiver',
+    '#description' => t('http(s)://yourhost.example.com/sms/twowaysms/status'),
+    '#value' => url('sms/twowaysms/status/', array('absolute' => TRUE)),
+  );
+  return $form;
+}
+
+/**
+ * Validates the submission of the configuration form.
+ *
+ * @param array $form
+ * @param array $form_state
+ */
+function sms_clickatell_admin_form_validate($form, &$form_state) {
+  // Check default sender
+  if (!empty($form_state['values']['twowaysms_phone'])) {
+    if (!is_numeric($form_state['values']['twowaysms_phone'])) {
+      if (strlen($form_state['values']['twowaysms_phone']) > 12) {
+        form_set_error('twowaysms_phone', t('An alphanumeric sender is limited to a maximum of 11 characters.'));
+      }
+    }
+  }  
+}
+  
+  /**
+ * Returns custom additions to be added to the send forms
+ *
+ * @return array Drupal form structure
+ */
+
+/**
+ * Send a message
+ *
+ * @param $number
+ *   MSISDN of message recipient. Expected to include the country code prefix.
+ * @param $message
+ *   Message body text.
+ * @param $options
+ *   Options array from SMS Framework.
+ *
+ * @return
+ *   Response array.
+ */
+
+  function twowaysms_send($numberto, $message, $options) {
+  // Get config
+  $gateway = sms_gateways('gateway', 'twowaysms');
+  $config = $gateway['configuration'];
+
+  // Prepare the URL and get the method
+  $url_base = $config['twowaysms_send_base_url'];
+  $method   = $config['twowaysms_send_method'];
+
+  //Lets specify a gw number
+  
+  $umid= '';   
+  if (array_key_exists('msg_id', $options)) {
+    $umid = $options['msg_id'];
+  }
+   
+  
+  // Prepare required arguments
+  $params = array();
+
+  $token_field = 'token';
+  $token_value = $config['twowaysms_token_value'];
+  if (! empty($token_field)) {
+    $params[$token_field] = $token_value;
+  }
+  
+  $from_field = 'from';
+  $from_value = $config['twowaysms_gwnumber'];
+  if (! empty($from_field)) {
+    $params[$from_field] = $from_value;
+  }
+  
+  $to_field = 'to';
+  $params[$to_field] = $numberto;
+
+  $text_field = 'text';
+  $params[$text_field] = $message;
+
+  $umid_field = 'umid';
+  $params[$umid_field] = $umid;
+  
+  
+  // Prepare the query string
+  // Note that we are forcing http_build_query to use '&' as a separator instead of the usual '&amp;'
+  $query_string = http_build_query($params, NULL, '&');
+
+  if ($method == 'GET') {
+    $url = $url_base . '?' . $query_string;
+    $http_result = drupal_http_request($url);
+  }
+  elseif ($method == 'POST') {
+    $headers = array('Content-Type' => 'application/x-www-form-urlencoded');
+    $http_result = drupal_http_request($url_base, array('headers' => $headers, 'method' => 'POST', 'data' => $query_string));
+  }
+
+  // Check for HTTP errors
+  if ($http_result->error) {
+    return array(
+      'status'  => FALSE,
+      'message' => t('An error occured during the HTTP request: @error',
+                     array('@error' => $http_result->error)),
+    );
+  }
+
+  if ($http_result->data) {
+    // Test the HTTP return code
+    if ($http_result->code >= 200 && $http_result->code <= 299) {
+      // Prepare a good response array
+      $result = array(
+        'status'      => TRUE,
+        'status_code' => SMS_GW_OK,
+        'gateway_status_code' => $http_result->code,
+        'gateway_status_text' => $http_result->data,
+      );
+    }
+    else {
+      // We got a (possibly) bad response code
+      $result = array(
+        'status'      => FALSE,
+        'status_code' => SMS_GW_ERR_OTHER,
+        'gateway_status_code' => $http_result->code,
+        'gateway_status_text' => $http_result->data,
+      );
+    }
+  }
+  return $result;
+}
+
+function twowaysms_balance() {
+  // Get config
+  $gateway = sms_gateways('gateway', 'twowaysms');
+  $config = $gateway['configuration'];
+
+  // Prepare the URL and get the method
+  $url_base = $config['twowaysms_balance_base_url'];
+  $method   = $config['twowaysms_balance_method'];
+
+ // Prepare required arguments
+  $params = array();
+
+  $token_field = 'token';
+  $token_value = $config['twowaysms_token_value'];
+  if (! empty($token_field)) {
+    $params[$token_field] = $token_value;
+  }
+  
+  $from_field = 'from';
+  $from_value = $config['twowaysms_gwnumber'];
+  if (! empty($from_field)) {
+    $params[$from_field] = $from_value;
+  }   
+  // Prepare the query string
+  // Note that we are forcing http_build_query to use '&' as a separator instead of the usual '&amp;'
+  $query_string = http_build_query($params, NULL, '&');
+
+  if ($method == 'GET') {
+    $url = $url_base . '?' . $query_string;
+    $http_result = drupal_http_request($url);
+  }
+  elseif ($method == 'POST') {
+    $headers = array('Content-Type' => 'application/x-www-form-urlencoded');
+    $http_result = drupal_http_request($url_base, array('headers' => $headers, 'method' => 'POST', 'data' => $query_string));
+  }
+
+  // Check for HTTP errors
+  if ($http_result->error) {
+    return array(
+      'status'  => FALSE,
+      'message' => t('An error occured during the HTTP request: @error',
+                     array('@error' => $http_result->error)),
+    );
+  }
+
+  if ($http_result->data) {
+    // Test the HTTP return code
+    if ($http_result->code >= 200 && $http_result->code <= 299) {
+      // Prepare a good response array
+      $result = array(
+        'status'      => TRUE,
+        'status_code' => SMS_GW_OK,
+        'gateway_status_code' => $http_result->code,
+        'gateway_status_text' => $http_result->data,
+      );
+    }
+    else {
+      // We got a (possibly) bad response code
+      $result = array(
+        'status'      => FALSE,
+        'status_code' => SMS_GW_ERR_OTHER,
+        'gateway_status_code' => $http_result->code,
+        'gateway_status_text' => $http_result->data,
+      );
+    }
+  }
+  
+  return str_replace('Credit: ', '', $result['data']);
+}
+
+/**
+ * Receive an SMS message and pass it into the SMS Framework
+ */
+function twowaysms_receive_message() {
+  // Get config
+  $gateway = sms_gateways('gateway', 'twowaysms');
+  $config  = $gateway['configuration'];
+  
+  $number = $_REQUEST['from']; // the sender's phone number;
+  $message = $_REQUEST['text']; // the body of the message;
+  
+  /*
+   * $token_field = 'token';
+   
+  $token_value = $config['twowaysms_token_value'];
+  if (! empty($token_field)) {
+    $params[$token_field] = $token_value;
+  }
+  
+  $from_field = 'from';
+  $from_value = $config['twowaysms_gwnumber'];
+  if (! empty($from_field)) {
+    $params[$from_field] = $from_value;
+  }   
+  */
+  
+  $options = array();
+  $options['msg_id'] = $_REQUEST['mid'];
+
+  sms_incoming($number, $message, $options);
+}
+
+  function twowaysms_status_message() {
+  // Get config
+  $gateway = sms_gateways('gateway', 'twowaysms');
+  $config  = $gateway['configuration'];
+
+  $mid = $_REQUEST['mid']; // message id in server;
+  $number = $_REQUEST['from'];
+  $status = $_REQUEST['status']; // current status of the message;  
+  
+  $options = array();
+  $options['msg_id'] = $mid;
+  
+  sms_receipt($number, $status, $options);
+}

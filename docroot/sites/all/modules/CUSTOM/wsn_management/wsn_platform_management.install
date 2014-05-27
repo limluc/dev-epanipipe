@@ -1,0 +1,70 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Wireless Sensor Network (WSN) Platform module.
+ */
+
+/**
+ * Implement hook_install().
+ *
+ */
+function wsn_platform_management_install() {
+  drupal_install_schema('wsn_platform_incoming data');
+}
+
+/**
+ * Implement hook_uninstall().
+ *
+ */
+function wsn_platform_management_uninstall() {
+  drupal_uninstall_schema('sms_track');
+}
+
+/**
+ * Implement hook_schema().
+ *
+ * @return
+ *   Drupal schema array
+ */
+function wsn_platform_management_schema() {
+  $schema['wsn_platform_management'] = array(
+    'description' => 'WSN Platform Management Table for Incoming Data.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE),
+      'reference' => array(
+        'description' => 'Reference code of message.',
+        'type'        => 'varchar',
+        'length'      => 64,
+        'not null'    => FALSE),
+      'status' => array(
+        'description' => '0=okay 1=error.',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE),
+      'number' => array(
+        'description' => 'Node Sender Number.',
+        'type'        => 'varchar',
+        'length'      => 20,
+        'not null'    => TRUE),
+      'message' => array(
+        'description' => 'Message text.',
+        'type'        => 'text',
+        'size'        => 'normal',
+        'not null'    => FALSE),
+      'created' => array(
+        'description' => 'The creation timestamp.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE),
+      ),
+    'unique keys' => array(),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}

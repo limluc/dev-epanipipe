@@ -1,0 +1,166 @@
+<?php
+/**
+ * @file
+ * Message tracking feature module for Drupal SMS Framework.
+ *
+ * @package wsn_platform
+ * @subpackage wsn_platform_management
+ */
+
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   URI string
+ * @param $arg
+ *  Page argument array
+ *
+ * @return
+ *   HTML page content string
+ */
+function wsn_platform_management_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#wsn_platform_management":
+      $output = t("<i>TO BE RE-WRITTEN</i>This module uses a database table to store messages, and implements Views for reporting.");
+      break;
+  }
+  return $output;
+}
+
+
+// /**
+ // * Implements hook_cron().
+ // */
+// function wsn_platform_management_cron() {
+  // // Ensure that we only run at most once per hour
+  // $last_run = variable_get('wsn_platform_management_archive_cron_last_run', 0);
+  // $time_an_hour_ago = REQUEST_TIME - 3600;
+  // if ($last_run <= $time_an_hour_ago) {
+    // // Purge the archive
+    // wsn_platform_management_archive_purge();
+    // variable_set('wsn_platform_management_archive_cron_last_run', REQUEST_TIME);
+  // }
+// }
+
+/**
+ * Implements hook_menu().
+ *
+ * @return
+ *   Drupal menu items array
+ */
+function wsn_platform_management_menu() {
+  $items = array();
+
+  $items['admin/wsn_platform'] = array(
+    'title' => 'WSN Platform',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/wsn_platform/wsn_platform_management'] = array(
+    'title' => 'Message tracking',
+    'description' => 'Options and view for the message archive.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsn_platform_management_settings_form'),
+    'access arguments' => array('administer wsn_platform'),
+    'file' => 'wsn_platform_management.admin.inc',
+  );
+  $items['admin/wsn_platform/wsn_platform_management/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+    $items['wsn_platform_management/sms_receiver'] = array(
+    'title' => 'WSN Platform SMS Gateway',
+    'page callback' => 'wsn_sms_gateway',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );  
+  return $items;
+}
+
+/**
+ * Implements hook_sms_incoming().
+ *
+ * @param $op
+ *   SMS incoming operation string (pre process, process, post process)
+ * @param $number
+ *   MSISDN of sender
+ * @param $message
+ *   SMS message body string
+ * @param $options
+ *   Additional options array including receiver MSISDN
+ */
+function wsn_platform_management_sms_incoming($op, $number, $message, $options) {
+  if ($op == 'pre process') {
+    // Archiving
+    $dir = 1; // incoming
+    wsn_platform_management_archive_write($dir, $number, $message, $options);
+    
+  }
+}
+
+
+/**
+ * Write a record to the DB table
+ *
+ * @param $direction
+ *   Direction integer of message (0=outgoing, 1=incoming)
+ * @param $number
+ *   MSISDN of remote
+ * @param $message
+ *   SMS message body string
+ * @param $options
+ *   Array of additional options
+ * @return
+ *   DB Query result
+ */
+function wsn_platform_management_archive_write($status, $number, $message, $mid) {
+
+  $gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
+  $created   = REQUEST_TIME;
+  $options_z = serialize($options);
+
+  $result = $id = db_insert('wsn_platform_management')
+  ->fields(array(
+    'reference' => $mid,
+    'number' => $number,
+    'message' => $message,
+    'created' => $created,
+    'status' => $status,
+  ))
+  ->execute();
+}
+
+
+/**
+ * Receive an SMS message and pass it into the SMS Framework
+ */
+function wsn_sms_gateway() {
+   $token = $_REQUEST['token'];
+   $from = $_REQUEST['from'];
+   $to = $_REQUEST['to'];
+   $mid = $_REQUEST['mid'];
+   $text = $_REQUEST['text'];
+   
+   $data = array(
+      'token' => $token,
+      'from' => $from,
+      'to' => $to,
+      'umid' => $mid,
+      'text' => $text
+    );
+    
+   $url = 'http://epanipipedev.devcloud.acquia-sites.com/sms/twowaysms/receiver';
+   $full_url = url($url, array('query' => $data));
+   drupal_http_request($full_url);
+   
+   $status = 1;
+   $textback = 'ER';
+   if(1){
+      $status = 0;
+      $textback = 'OK';
+   }
+   sms_send($from, $textback);
+   wsn_platform_management_archive_write($status, $to, $text, $mid);
+}

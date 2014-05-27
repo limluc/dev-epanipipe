@@ -1,0 +1,7 @@
+name = "2-WaySMS Gateway Module"
+description = "Gateway: Configurable module for quick & easy integration to 2-waysms.com gateway provider"
+package = SMS Framework
+core = 7.x
+dependencies[] = sms
+
+files[] = twowaysms.module

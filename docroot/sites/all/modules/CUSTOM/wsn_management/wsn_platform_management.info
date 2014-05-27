@@ -1,0 +1,10 @@
+name = WSN Platform Management Module
+description = Base Module of WSN Platform to Manage Module Methodology, i.e. Communication Layer
+package = WSN Platform
+core = 7.x
+
+dependencies[] = sms
+dependencies[] = wsn_platform
+
+files[] = wsn_platform_management.install
+files[] = wsn_platform_management.module
