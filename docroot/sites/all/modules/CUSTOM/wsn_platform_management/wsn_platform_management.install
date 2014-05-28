@@ -13,6 +13,8 @@ function wsn_platform_management_install() {
   variable_set('wsn_warning_prefix',utf8_encode(chr(165)));
   variable_set('wsn_config_prefix',utf8_encode(chr(167)));
   variable_set('wsn_suffix',utf8_encode(chr(164)));
+  variable_set('wsn_chardec_shift',32);
+  variable_set('wsn_chardec_total',95);
 }
 
 /**

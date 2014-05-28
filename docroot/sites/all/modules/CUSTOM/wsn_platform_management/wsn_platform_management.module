@@ -1,0 +1,275 @@
+<?php
+/**
+ * @file
+ * Message tracking feature module for Drupal SMS Framework.
+ *
+ * @package wsn_platform
+ * @subpackage wsn_platform_management
+ */
+
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   URI string
+ * @param $arg
+ *  Page argument array
+ *
+ * @return
+ *   HTML page content string
+ */
+function wsn_platform_management_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#wsn_platform_management":
+      $output = t("<i>TO BE RE-WRITTEN</i>This module uses a database table to store messages, and implements Views for reporting.");
+      break;
+  }
+  return $output;
+}
+
+
+// /**
+ // * Implements hook_cron().
+ // */
+// function wsn_platform_management_cron() {
+  // // Ensure that we only run at most once per hour
+  // $last_run = variable_get('wsn_platform_management_archive_cron_last_run', 0);
+  // $time_an_hour_ago = REQUEST_TIME - 3600;
+  // if ($last_run <= $time_an_hour_ago) {
+    // // Purge the archive
+    // wsn_platform_management_archive_purge();
+    // variable_set('wsn_platform_management_archive_cron_last_run', REQUEST_TIME);
+  // }
+// }
+
+/**
+ * Implements hook_menu().
+ *
+ * @return
+ *   Drupal menu items array
+ */
+function wsn_platform_management_menu() {
+  $items = array();
+
+  $items['admin/wsn_platform'] = array(
+    'title' => 'WSN Platform',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/wsn_platform/wsn_platform_management'] = array(
+    'title' => 'Message tracking',
+    'description' => 'Options and view for the message archive.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsn_platform_management_settings_form'),
+    'access arguments' => array('administer wsn_platform'),
+    'file' => 'wsn_platform_management.admin.inc',
+  );
+  $items['admin/wsn_platform/wsn_platform_management/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+    $items['wsn_platform_management/sms_receiver'] = array(
+    'title' => 'WSN Platform SMS Gateway',
+    'page callback' => 'wsn_platform_management_sms_gateway',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );  
+    // $items['wsn_platform_management/test'] = array(
+    // 'title' => 'WSN Platform SMS Gateway',
+    // 'page callback' => 'wsn_platform_management_dataprocessing',
+    // 'access callback' => TRUE,
+    // 'type' => MENU_CALLBACK,
+  // );  
+  return $items;
+}
+
+/**
+ * Write a record to the DB table
+ *
+ * @param $direction
+ *   Direction integer of message (0=outgoing, 1=incoming)
+ * @param $number
+ *   MSISDN of remote
+ * @param $message
+ *   SMS message body string
+ * @param $options
+ *   Array of additional options
+ * @return
+ *   DB Query result
+ */
+function wsn_platform_management_archive_write($status, $number, $message, $mid, $raw) {
+  //$gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
+  $created = REQUEST_TIME;
+
+  $result = $id = db_insert('wsn_platform_management')
+  ->fields(array(
+    'reference' => $mid,
+    'number' => $number,
+    'message' => $message,
+    'created' => $created,
+    'status' => $status,
+    'raw_data' => $raw,
+  ))
+  ->execute();
+}
+
+
+/**
+ * Receive an SMS message and pass it into the SMS Framework
+ */
+function wsn_platform_management_sms_gateway() {
+   //Function to write archive to local wsn_platform for debugging purposes
+   $raws = array();
+   $status = 0;
+   $textback = '£ER';  
+   
+   $token = $_REQUEST['token'];
+   $from = $_REQUEST['from'];
+   $to = $_REQUEST['to'];
+   $mid = $_REQUEST['mid'];
+   $text = $_REQUEST['text'];
+   //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';   //testvalue
+   $data = array(
+      'token' => $token,
+      'from' => $from,
+      'to' => $to,
+      'umid' => $mid,
+      'text' => $text,
+    );
+   
+   // Calling the real sms gateway function, in this casein this case twowaysms
+   // Future work to make it as a Form // Admin Settings
+   $url =  'http://'. $_SERVER['HTTP_HOST'] . '/sms/twowaysms/receiver';
+   $full_url = url($url, array('query' => $data));
+   drupal_http_request($full_url);
+   
+   //Check and Processing Raw Sensor Data
+   //First Step
+   //TO DO: CHECK WSN NODE SCHEMA IF NODE IS VALID BASED ON FORM
+   
+   if(!wsn_platform_management_sms_validate_sender($from)){
+        $status = 1;
+        $textback = '£ER';
+   }
+   else{
+   //Processing Suffix and Prefixes
+   $parsed_data = wsn_platform_management_sms_categorise_message($text);
+   
+
+   $nodesets = wsn_platform_management_get_nodesets($from);
+   $rawdata = array();
+   switch($parsed_data["prefix_value"]){
+    case 1: //data
+        {
+        $rawdata = wsn_platform_management_sms_process_data($parsed_data["data"], $nodesets);
+        }
+        break;
+    case 2: //warning - to be added
+        {
+
+        }
+        break;
+    case 3: //command - to be added
+        {
+
+        }
+        break;
+    case 4: //unknown - to be added
+        {
+        $status = 1;
+        $textback = '£ER';
+        }
+        break;
+    }
+   
+   } //if not validated
+   
+   //If not in localhost // Only Development Purposes
+   if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+          sms_send($from, $textback);
+   }
+   //capture this to local schema
+   $raws = serialize($rawdata);
+   wsn_platform_management_archive_write($status, $to, $text, $mid, $raws);
+}
+
+
+/**
+ * Validate Sender
+ * @param from
+ * @return boolean yes/no otherwise node details otherwise invalid(further development)
+ */
+function wsn_platform_management_sms_validate_sender($from){
+    return 1;
+}
+ 
+ 
+/**
+ * Clean String UTF-8 Conversion
+ * @param text
+ * @return error or parsed message
+ */
+function wsn_platform_management_sms_categorise_message($text){
+      
+  //Header Processing
+  if(!strcmp(substr($text,0,2), variable_get('wsn_data_prefix'))){  
+      $prefix = 1;
+  }
+  elseif(!strcmp(substr($text,0,2), variable_get('wsn_warning_prefix'))){
+      $prefix = 2;
+  }
+  elseif(!strcmp(substr($text,0,2), variable_get('wsn_command_prefix'))){
+      $prefix = 3;
+  }
+  else{
+      $prefix = 4;    
+  }
+  
+  //Suffix Processing
+  //Determine Length of String
+  $charlen = strpos($text, variable_get('wsn_suffix'));
+  $newtext = substr($text, 2 , $charlen-2);    
+  
+  return array("prefix_value" => $prefix, "data" => $newtext );
+}
+
+
+function wsn_platform_management_sms_process_data($text, $nodeset){
+    //encoding message as it stored in strange ASCCII-80551 UTF-8 format
+
+    //check btye check
+    $checkbyte = substr($text, -1);
+    $raw = substr($text, 0 , strlen($text) - 1);
+    
+    $checksum = 0;
+    $rawdata = array();
+    $totalraw = strlen($raw);
+    $rev = $totalraw;
+    
+    if($nodeset['datacompression'] == 'CHARDEC-32'){
+      for($row = 0; $row < $nodeset['reading_occurence'] ; $row ++){
+        for($col = 0; $col < $nodeset['sensor_number'] ; $col ++){
+          $rawdata[$col][$row] = ord(substr($raw, $totalraw-$rev, 1))-variable_get('wsn_chardec_shift');
+          $checksum += $rawdata[$col][$row];
+          $rev--;
+        }
+      }
+    }
+    
+    //implementing checkbyte errorsum //to be updated
+    if($checkbyte == ($checksum%variable_get('wsn_chardec_total'))){
+      $error = 0;
+    } 
+    else {
+      $error = 1;
+    } 
+    dprint_r($rawdata); //to update this to include error messages if possible
+    return $rawdata; 
+}
+
+function wsn_platform_management_get_nodesets($from){
+  //query to database
+  return array( "reading_occurence" => 3, "sensor_number" => 8, "datacompression" => "CHARDEC-32");
+}
