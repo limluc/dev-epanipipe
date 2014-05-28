@@ -9,7 +9,10 @@
  *
  */
 function wsn_platform_management_install() {
-  drupal_install_schema('wsn_platform_incoming data');
+  variable_set('wsn_data_prefix',utf8_encode(chr(163)));
+  variable_set('wsn_warning_prefix',utf8_encode(chr(165)));
+  variable_set('wsn_config_prefix',utf8_encode(chr(167)));
+  variable_set('wsn_suffix',utf8_encode(chr(164)));
 }
 
 /**
@@ -61,6 +64,11 @@ function wsn_platform_management_schema() {
         'type'        => 'int',
         'unsigned'    => TRUE,
         'not null'    => TRUE),
+      'raw_data' => array(
+        'description' => 'Post Processed Data.',
+        'type'        => 'text',
+        'size'        => 'normal',
+        'not null'    => FALSE),
       ),
     'unique keys' => array(),
     'primary key' => array('id'),

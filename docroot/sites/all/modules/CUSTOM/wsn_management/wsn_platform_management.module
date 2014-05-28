@@ -72,7 +72,13 @@ function wsn_platform_management_menu() {
   );
     $items['wsn_platform_management/sms_receiver'] = array(
     'title' => 'WSN Platform SMS Gateway',
-    'page callback' => 'wsn_sms_gateway',
+    'page callback' => 'wsn_platform_management_sms_gateway',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );  
+    $items['wsn_platform_management/test'] = array(
+    'title' => 'WSN Platform SMS Gateway',
+    'page callback' => 'wsn_platform_management_remote_parsing',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );  
@@ -93,10 +99,9 @@ function wsn_platform_management_menu() {
  * @return
  *   DB Query result
  */
-function wsn_platform_management_archive_write($status, $number, $message, $mid) {
-  $gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
-  $created   = REQUEST_TIME;
-  $options_z = serialize($options);
+function wsn_platform_management_archive_write($status, $number, $message, $mid, $raw) {
+  //$gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
+  $created = REQUEST_TIME;
 
   $result = $id = db_insert('wsn_platform_management')
   ->fields(array(
@@ -105,6 +110,7 @@ function wsn_platform_management_archive_write($status, $number, $message, $mid)
     'message' => $message,
     'created' => $created,
     'status' => $status,
+    'raw_data' => $raw,
   ))
   ->execute();
 }
@@ -113,13 +119,13 @@ function wsn_platform_management_archive_write($status, $number, $message, $mid)
 /**
  * Receive an SMS message and pass it into the SMS Framework
  */
-function wsn_sms_gateway() {
+function wsn_platform_management_sms_gateway() {
    $token = $_REQUEST['token'];
    $from = $_REQUEST['from'];
    $to = $_REQUEST['to'];
    $mid = $_REQUEST['mid'];
    $text = $_REQUEST['text'];
-   
+  $text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';   
    $data = array(
       'token' => $token,
       'from' => $from,
@@ -131,7 +137,7 @@ function wsn_sms_gateway() {
    // calling the real sms gateway function
    // in this case twowaysms
    // future work to make it as a form
-   $url =  'http://'. $_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'] . '/sms/twowaysms/receiver';
+   $url =  'http://'. $_SERVER['HTTP_HOST'] . '/sms/twowaysms/receiver';
    $full_url = url($url, array('query' => $data));
    drupal_http_request($full_url);
    
@@ -143,8 +149,200 @@ function wsn_sms_gateway() {
       $status = 0;
       $textback = '£OK';
    }
-   sms_send($from, $textback);
-   wsn_platform_management_archive_write($status, $to, $text, $mid);
+   
+   //if not in localhost // only development purposes
+   if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+          sms_send($from, $textback);
+   }
+   $raws = wsn_platform_management_remote_parsing($text);
+   $raw = serialize($raws);
+   wsn_platform_management_archive_write($status, $to, $text, $mid, $raw);
 }
 
 
+/**
+ * Clean String UTF-8 Conversion
+ * @param text
+ * @return error or parsed message
+ */
+function wsn_platform_management_categorise_message($text){
+  
+  if(!strcmp(substr($text,0,2), variable_get('wsn_data_prefix')))
+      return 1;
+  if(!strcmp(substr($text,0,2), variable_get('wsn_warning_prefix')))
+      return 2;
+  if(!strcmp(substr($text,0,2), variable_get('wsn_command_prefix')))
+      return 3;
+}
+/*
+ * 
+ * 
+ *
+ */
+ 
+function wsn_platform_management_split_get_raw_data($text, $sen_del, $dat_del, $read_occur, $sen_num){
+    //delete prefix & suffix
+    $charlen = strpos($text, variable_get('wsn_suffix'));
+    $newtext = substr($text, 2 , $charlen - 2);
+    //check bit check
+    $checkbyte = substr($newtext, -1);
+    $reading = substr($newtext, 0 , strlen($newtext) - 1);
+    
+    $raw_data = array();
+    $totalread = strlen($reading);
+    $rev = $totalread;
+    if($sen_num != 0){
+        for($row = 0; $row < ($totalread/$sen_num) ; $row ++){
+            for($col = 0; $col < ($sen_num) ; $col ++){
+            $raw_data[$col][$row] = substr($reading, $totalread-$rev, 1);
+            $rev--;
+            }
+        }
+    }
+    return $raw_data;
+}
+
+function wsn_platform_management_split_get_checkbyte($text, $sen_del, $dat_del, $read_occur, $sen_num){
+    //delete prefix & suffix
+    $charlen = strpos($text, variable_get('wsn_suffix'));
+    $newtext = substr($text, 2 , $charlen - 2);
+    //check bit check
+    $checkbyte = substr($newtext, -1);
+    $reading = substr($newtext, 0 , strlen($newtext) - 1);
+    
+    $raw_data = array();
+    $totalread = strlen($reading);
+    $rev = $totalread;
+    if($sen_num != 0){
+        for($row = 0; $row < ($totalread/$sen_num) ; $row ++){
+            for($col = 0; $col < ($sen_num) ; $col ++){
+            $raw_data[$col][$row] = substr($reading, $totalread-$rev, 1);
+            $rev--;
+            }
+        }
+    }
+    return $checkbyte;
+}
+
+
+function wsn_platform_management_parse_get_reading($raw_data, $checkbyte, $data_conversion, $sen_num, $read_occur){
+    //delete prefix & suffix
+    $checksum = 0;
+    $error = 0;
+    $raw_reading =array();
+    if(strcmp($data_conversion,'CHAR-DEC-32')){
+        for($row = 0; $row < $read_occur ; $row ++){
+            for($col = 0; $col < sen_number ; $col ++){
+              $raw_reading[$col][$row] = ord( $raw_data[$col][$row]) - 32;
+              $checksum += $raw_reading[$col][$row];
+            }
+        }
+        if($checkbyte == (checksum%95)){
+          $error = 3;
+        }
+    }
+    return $raw_reading;
+}
+
+function wsn_platform_management_parse_check_reading($raw_data, $checkbyte, $data_conversion, $sen_num, $read_occur){
+    //delete prefix & suffix
+    $checksum = 0;
+    $error = 0;
+    if(strcmp($data_conversion,'CHAR-DEC-32')){
+        for($row = 0; $row < $read_occur ; $row ++){
+            for($col = 0; $col < sen_number ; $col ++){
+              $raw_reading[$col][$row] = ord( $raw_data[$col][$row]) - 32;
+              $checksum += $raw_reading[$col][$row];
+            }
+        }
+        if($checkbyte == (checksum%95)){
+          $error = 3;
+        }
+    }
+    return $error;
+}
+
+/**
+ * Implementing Text Passed to Parsing Data
+ * @param text
+ * Text to be parsed
+ * 
+ * @param from
+ * Identifier Text
+ * 
+ * @return arraydata
+ * Return array of data parsed
+ * Return if data is okay or not
+ * 
+ */
+function wsn_platform_management_process_check_data($text, $from){
+  //sample data if not available    
+  //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';
+  $sen_del = '';
+  $dat_del = '';
+  $read_occur = 3;
+  $sen_num = 8;
+  $data_conversion = 'CHAR-DEC-32';
+  
+  
+  $utf_text = utf8_encode($text); 
+  switch(wsn_platform_management_categorise_message($utf_text)){
+    case 1:
+        {
+        $raw_datas = wsn_platform_management_split_get_raw_data($utf_text, $sen_del, $dat_del, $read_occur, $sen_num);
+        $check_byte = wsn_platform_management_split_get_checkbyte($utf_text, $sen_del, $dat_del, $read_occur, $sen_num);
+        $raw_readings = wsn_platform_management_parse_get_reading($raw_datas, $check_byte, $data_conversion, $sen_num, $read_occur);
+        $error = wsn_platform_management_parse_check_reading($raw_datas, $check_byte, $data_conversion, $sen_num, $read_occur);
+        }
+        break;
+  }
+ return $check_byte;
+}
+
+function wsn_platform_management_process_process_data($text, $from){
+  //sample data if not available    
+  $text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';
+  $sen_del = '';
+  $dat_del = '';
+  $read_occur = 3;
+  $sen_num = 8;
+  $data_conversion = 'CHAR-DEC-32';
+ 
+  $utf_text = utf8_encode($text); 
+  switch(wsn_platform_management_categorise_message($utf_text)){
+    case 0:
+        {
+        $raw_datas = wsn_platform_management_split_get_raw_data($utf_text, $sen_del, $dat_del, $read_occur, $sen_num);
+        $check_byte = wsn_platform_management_split_get_checkbyte($utf_text, $sen_del, $dat_del, $read_occur, $sen_num);
+        $raw_readings = wsn_platform_management_parse_get_reading($raw_datas, $check_byte, $data_conversion, $sen_num, $read_occur);
+        $error = wsn_platform_management_parse_check_reading($raw_datas, $check_byte, $data_conversion, $sen_num, $read_occur);
+        }
+        break;
+  }
+ return $raw_datas;
+}
+
+function wsn_platform_management_remote_parsing(){
+    //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';
+    $utf_text = utf8_encode($text); 
+  
+    //delete prefix & suffix
+    $charlen = strpos($utf_text, variable_get('wsn_suffix'));
+    $newtext = substr($utf_text, 4 , $charlen - 4);
+    //check bit check
+    $checkbyte = substr($newtext, -1);
+    $reading = substr($newtext, 0 , strlen($newtext) - 1);
+    
+    $raw_data = array();
+    $totalread = strlen($reading);
+    $rev = $totalread;
+        for($row = 0; $row < 3 ; $row ++){
+            for($col = 0; $col < 8 ; $col ++){
+            $raw_data[$col][$row] = ord(substr($reading, $totalread-$rev, 1))-31;
+            $rev--;
+            }
+    }
+  //return $newtext;
+  return serialize($raw_data);
+  
+}
