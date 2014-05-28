@@ -80,28 +80,6 @@ function wsn_platform_management_menu() {
 }
 
 /**
- * Implements hook_sms_incoming().
- *
- * @param $op
- *   SMS incoming operation string (pre process, process, post process)
- * @param $number
- *   MSISDN of sender
- * @param $message
- *   SMS message body string
- * @param $options
- *   Additional options array including receiver MSISDN
- */
-function wsn_platform_management_sms_incoming($op, $number, $message, $options) {
-  if ($op == 'pre process') {
-    // Archiving
-    $dir = 1; // incoming
-    wsn_platform_management_archive_write($dir, $number, $message, $options);
-    
-  }
-}
-
-
-/**
  * Write a record to the DB table
  *
  * @param $direction
@@ -116,7 +94,6 @@ function wsn_platform_management_sms_incoming($op, $number, $message, $options) 
  *   DB Query result
  */
 function wsn_platform_management_archive_write($status, $number, $message, $mid) {
-
   $gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
   $created   = REQUEST_TIME;
   $options_z = serialize($options);
@@ -150,13 +127,18 @@ function wsn_sms_gateway() {
       'umid' => $mid,
       'text' => $text
     );
-    
-   $url =  'http://'. $_SERVER['SERVER_NAME'] .'/sms/twowaysms/receiver';
+   
+   // calling the real sms gateway function
+   // in this case twowaysms
+   // future work to make it as a form
+   $url =  'http://'. $_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'] . '/sms/twowaysms/receiver';
    $full_url = url($url, array('query' => $data));
    drupal_http_request($full_url);
    
+   //function to write archive to local wsn_platform for debugging purposes
    $status = 1;
    $textback = 'ER';
+   
    if(1){
       $status = 0;
       $textback = '£OK';
@@ -164,3 +146,5 @@ function wsn_sms_gateway() {
    sms_send($from, $textback);
    wsn_platform_management_archive_write($status, $to, $text, $mid);
 }
+
+
