@@ -71,8 +71,8 @@ function wsn_platform_management_menu() {
     'weight' => 0,
   );
     $items['wsn_platform_management/sms_receiver'] = array(
-    'title' => 'WSN Platform SMS Gateway',
-    'page callback' => 'wsn_platform_management_sms_gateway',
+    'title' => 'WSN Platform SMS Receiver',
+    'page callback' => 'wsn_platform_management_sms_receiver',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );  
@@ -119,7 +119,7 @@ function wsn_platform_management_archive_write($status, $number, $message, $mid,
 /**
  * Receive an SMS message and pass it into the SMS Framework
  */
-function wsn_platform_management_sms_gateway() {
+function wsn_platform_management_sms_receiver() {
    //Function to write archive to local wsn_platform for debugging purposes
    $raws = array();
    $status = 0;
