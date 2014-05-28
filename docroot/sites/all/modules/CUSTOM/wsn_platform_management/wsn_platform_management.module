@@ -94,7 +94,7 @@ function wsn_platform_management_menu() {
  *   MSISDN of remote
  * @param $message
  *   SMS message body string
- * @param $options
+ * @param $raw
  *   Array of additional options
  * @return
  *   DB Query result
