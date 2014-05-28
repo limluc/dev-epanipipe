@@ -122,8 +122,9 @@ function wsn_platform_management_archive_write($status, $number, $message, $mid,
 function wsn_platform_management_sms_receiver() {
    //Function to write archive to local wsn_platform for debugging purposes
    $raws = array();
+   
    $status = 0;
-   $textback = '£ER';  
+   $textback = '£OK';  
    
    $token = $_REQUEST['token'];
    $from = $_REQUEST['from'];
