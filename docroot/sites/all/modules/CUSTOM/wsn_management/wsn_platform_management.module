@@ -151,7 +151,7 @@ function wsn_sms_gateway() {
       'text' => $text
     );
     
-   $url = 'http://epanipipedev.devcloud.acquia-sites.com/sms/twowaysms/receiver';
+   $url =  'http://'. $_SERVER['SERVER_NAME'] .'/sms/twowaysms/receiver';
    $full_url = url($url, array('query' => $data));
    drupal_http_request($full_url);
    
