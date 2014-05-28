@@ -159,7 +159,7 @@ function wsn_sms_gateway() {
    $textback = 'ER';
    if(1){
       $status = 0;
-      $textback = 'OK';
+      $textback = '£OK';
    }
    sms_send($from, $textback);
    wsn_platform_management_archive_write($status, $to, $text, $mid);
