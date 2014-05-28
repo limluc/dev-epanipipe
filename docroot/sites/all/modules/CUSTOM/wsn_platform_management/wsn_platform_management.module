@@ -188,9 +188,9 @@ function wsn_platform_management_sms_receiver() {
    } //if not validated
    
    //If not in localhost // Only Development Purposes
-   if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+   //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
           sms_send($from, $textback);
-   }
+   //}
    //capture this to local schema
    $raws = serialize($rawdata);
    wsn_platform_management_archive_write($status, $to, $text, $mid, $raws);
