@@ -57,7 +57,7 @@ function wsn_platform_management_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-  $items['admin/wsn_platform/wsn_platform_management'] = array(
+  $items['admin/wsn_platform/management'] = array(
     'title' => 'Message tracking',
     'description' => 'Options and view for the message archive.',
     'page callback' => 'drupal_get_form',
@@ -65,31 +65,23 @@ function wsn_platform_management_menu() {
     'access arguments' => array('administer wsn_platform'),
     'file' => 'wsn_platform_management.admin.inc',
   );
-  $items['admin/wsn_platform/wsn_platform_management/settings'] = array(
+  $items['admin/wsn_platform/management/settings'] = array(
     'title' => 'Settings',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-    $items['wsn_platform_management/sms_receiver'] = array(
+    $items['wsn_platform/management/sms_receiver'] = array(
     'title' => 'WSN Platform SMS Receiver',
     'page callback' => 'wsn_platform_management_sms_receiver',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );  
-    // $items['wsn_platform_management/test'] = array(
-    // 'title' => 'WSN Platform SMS Gateway',
-    // 'page callback' => 'wsn_platform_management_dataprocessing',
-    // 'access callback' => TRUE,
-    // 'type' => MENU_CALLBACK,
-  // );  
   return $items;
 }
 
 /**
  * Write a record to the DB table
  *
- * @param $direction
- *   Direction integer of message (0=outgoing, 1=incoming)
  * @param $number
  *   MSISDN of remote
  * @param $message
@@ -99,18 +91,18 @@ function wsn_platform_management_menu() {
  * @return
  *   DB Query result
  */
-function wsn_platform_management_archive_write($status, $number, $message, $mid, $raw) {
+function wsn_platform_management_archive_write($status, $number, $message, $mid, $raw, $type) {
   //$gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
   $created = REQUEST_TIME;
-
-  $result = $id = db_insert('wsn_platform_management')
+  $result = $id = db_insert('wsn_platform_management_log')
   ->fields(array(
     'reference' => $mid,
+    'status' => $status,
+    'data_type' => $type,
     'number' => $number,
     'message' => $message,
-    'created' => $created,
-    'status' => $status,
-    'raw_data' => $raw,
+    'created_datetime' => $created,
+    'post_parsing' => $raw,
   ))
   ->execute();
 }
@@ -120,18 +112,13 @@ function wsn_platform_management_archive_write($status, $number, $message, $mid,
  * Receive an SMS message and pass it into the SMS Framework
  */
 function wsn_platform_management_sms_receiver() {
-   //Function to write archive to local wsn_platform for debugging purposes
-   $raws = array();
-   
-   $status = 0;
-   $textback = '£OK';  
-   
    $token = $_REQUEST['token'];
    $from = $_REQUEST['from'];
    $to = $_REQUEST['to'];
    $mid = $_REQUEST['mid'];
    $text = $_REQUEST['text'];
    //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';   //testvalue
+   
    $data = array(
       'token' => $token,
       'from' => $from,
@@ -141,59 +128,81 @@ function wsn_platform_management_sms_receiver() {
     );
    
    // Calling the real sms gateway function, in this casein this case twowaysms
-   // Future work to make it as a Form // Admin Settings
+   // Future work to make it as an Admin Settings
    $url =  'http://'. $_SERVER['HTTP_HOST'] . '/sms/twowaysms/receiver';
    $full_url = url($url, array('query' => $data));
    drupal_http_request($full_url);
    
+   //Function to write archive to local wsn_platform for debugging purposes
+   $status = 0;  
+   
    //Check and Processing Raw Sensor Data
    //First Step
    //TO DO: CHECK WSN NODE SCHEMA IF NODE IS VALID BASED ON FORM
-   
    if(!wsn_platform_management_sms_validate_sender($from)){
         $status = 1;
-        $textback = '£ER';
-   }
+        //don't do anything
+   }//invalid sender number
    else{
    //Processing Suffix and Prefixes
    $parsed_data = wsn_platform_management_sms_categorise_message($text);
-   
-
    $nodesets = wsn_platform_management_get_nodesets($from);
-   $rawdata = array();
+   $rawdata = array(
+      "rawdata" => 0,
+      "error" => 0,
+   );
+   $raws = array();
+
    switch($parsed_data["prefix_value"]){
-    case 1: //data
+    case variable_get('wsn_data_prefix'): //data
         {
-        $rawdata = wsn_platform_management_sms_process_data($parsed_data["data"], $nodesets);
+          $rawdata = wsn_platform_management_sms_process_data($parsed_data["data"], $nodesets);
+          $status = $rawdata["error"];
+          $textback = $parsed_data["prefix_value"] . 'OK';               
+          if($status==1){
+              $textback = $parsed_data["prefix_value"] . 'ER';
+          }          
+          //If not in localhost // Only Development Purposes
+          //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+          sms_send($from, $textback);
+          //}
         }
         break;
-    case 2: //warning - to be added
+    case variable_get('wsn_warning_prefix'): //warning - to be added
         {
-
+          $rawdata = wsn_platform_management_sms_process_warning($parsed_data["data"], $nodesets);
+          $status = $rawdata["error"];
+          $textback = $parsed_data["prefix_value"] . 'OK';               
+          if($status==1){
+              $textback = $parsed_data["prefix_value"] . 'ER';
+          }          
+          //If not in localhost // Only Development Purposes
+          //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+          sms_send($from, $textback);
+          //}
         }
         break;
-    case 3: //command - to be added
+    case variable_get('wsn_config_prefix'): //command - to be added
         {
-
+          $rawdata = wsn_platform_management_sms_process_config($parsed_data["data"], $nodesets);
+          $status = $rawdata["error"];
+          $textback = $rawdata["rawdata"];
+          //If not in localhost // Only Development Purposes
+          //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+          sms_send($from, $textback);
+          //}
         }
         break;
-    case 4: //unknown - to be added
+    default: //unknown - to be added
         {
         $status = 1;
-        $textback = '£ER';
         }
         break;
     }
-   
-   } //if not validated
-   
-   //If not in localhost // Only Development Purposes
-   //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
-          sms_send($from, $textback);
-   //}
    //capture this to local schema
-   $raws = serialize($rawdata);
-   wsn_platform_management_archive_write($status, $to, $text, $mid, $raws);
+   $raws = serialize($rawdata["rawdata"]);
+   wsn_platform_management_archive_write($status, $from, $text, $mid, $raws, $parsed_data["prefix_value"]);
+   }//if valid sender
 }
 
 
@@ -214,25 +223,11 @@ function wsn_platform_management_sms_validate_sender($from){
  */
 function wsn_platform_management_sms_categorise_message($text){
       
-  //Header Processing
-  if(!strcmp(substr($text,0,2), variable_get('wsn_data_prefix'))){  
-      $prefix = 1;
-  }
-  elseif(!strcmp(substr($text,0,2), variable_get('wsn_warning_prefix'))){
-      $prefix = 2;
-  }
-  elseif(!strcmp(substr($text,0,2), variable_get('wsn_command_prefix'))){
-      $prefix = 3;
-  }
-  else{
-      $prefix = 4;    
-  }
-  
+  $prefix = substr($text,0,2);
   //Suffix Processing
   //Determine Length of String
   $charlen = strpos($text, variable_get('wsn_suffix'));
-  $newtext = substr($text, 2 , $charlen-2);    
-  
+  $newtext = substr($text, 2 , $charlen-2);     
   return array("prefix_value" => $prefix, "data" => $newtext );
 }
 
@@ -241,18 +236,19 @@ function wsn_platform_management_sms_process_data($text, $nodeset){
     //encoding message as it stored in strange ASCCII-80551 UTF-8 format
 
     //check btye check
-    $checkbyte = substr($text, -1);
+    $checkbyte = ord(substr($text, -1))-variable_get('wsn_chardec_shift');
+    
+    //message
     $raw = substr($text, 0 , strlen($text) - 1);
     
     $checksum = 0;
     $rawdata = array();
-    $totalraw = strlen($raw);
-    $rev = $totalraw;
+    $rev = strlen($raw);
     
-    if($nodeset['datacompression'] == 'CHARDEC-32'){
-      for($row = 0; $row < $nodeset['reading_occurence'] ; $row ++){
-        for($col = 0; $col < $nodeset['sensor_number'] ; $col ++){
-          $rawdata[$col][$row] = ord(substr($raw, $totalraw-$rev, 1))-variable_get('wsn_chardec_shift');
+    if($nodeset["datacompression"] == 'CHARDEC-32'){
+      for($row = 0; $row < $nodeset["reading_occurence"] ; $row ++){
+        for($col = 0; $col < $nodeset["sensor_number"] ; $col ++){
+          $rawdata[$col][$row] = ord(substr($raw, strlen($raw)-$rev, 1))-variable_get('wsn_chardec_shift');
           $checksum += $rawdata[$col][$row];
           $rev--;
         }
@@ -265,12 +261,46 @@ function wsn_platform_management_sms_process_data($text, $nodeset){
     } 
     else {
       $error = 1;
-    } 
-    dprint_r($rawdata); //to update this to include error messages if possible
-    return $rawdata; 
+    }
+    return array("rawdata" => $rawdata, "error" => $error); //to update this to include error messages if possible
+    //return $rawdata; 
+}
+
+function wsn_platform_management_sms_process_warning($text, $nodeset){
+    $error = 0; $rawdata = 0;
+    $raw = substr($text, 0 , strlen($text));
+    if($nodeset["datacompression"] == 'CHARDEC-32'){
+          $rawdata = ord($raw)-variable_get('wsn_chardec_shift');
+    }
+    return array("rawdata" => $rawdata, "error" => $error);
+    //return $rawdata; 
+}
+
+function wsn_platform_management_sms_process_config($text, $nodeset){
+    //encoding message as it stored in strange ASCCII-80551 UTF-8 format
+
+    //check btye check
+    //$checkbyte = ord(substr($text, -1))-variable_get('wsn_chardec_shift');
+    
+    //message 
+    $error = 0; $rawdata = 0;
+    $raw = substr($text, 0 , strlen($text));
+    if($nodeset['datacompression'] == 'CHARDEC-32'){
+      $rawdata =  chr($nodeset["water_threshold"] + variable_get('wsn_chardec_shift')) . ','.
+                  chr($nodeset["freq_read"] + variable_get('wsn_chardec_shift')) . ',' .
+                  chr($nodeset["freq_trans"] + variable_get('wsn_chardec_shift'));
+    }
+    return array("rawdata" => $rawdata, "error" => $error);
+    //return $rawdata; 
 }
 
 function wsn_platform_management_get_nodesets($from){
   //query to database
-  return array( "reading_occurence" => 3, "sensor_number" => 8, "datacompression" => "CHARDEC-32");
+  return array( 
+    "reading_occurence" => 3, 
+    "sensor_number" => 8,
+    "datacompression" => "CHARDEC-32",
+    "water_threshold" => 15,
+    "freq_read" => 1560,
+    "freq_trans" => 4680);
 }

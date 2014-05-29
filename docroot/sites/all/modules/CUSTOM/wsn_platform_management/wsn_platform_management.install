@@ -22,7 +22,7 @@ function wsn_platform_management_install() {
  *
  */
 function wsn_platform_management_uninstall() {
-  drupal_uninstall_schema('sms_track');
+  drupal_uninstall_schema('wsn_platform_management_log');
 }
 
 /**
@@ -32,49 +32,63 @@ function wsn_platform_management_uninstall() {
  *   Drupal schema array
  */
 function wsn_platform_management_schema() {
-  $schema['wsn_platform_management'] = array(
-    'description' => 'WSN Platform Management Table for Incoming Data.',
-    'fields' => array(
-      'id' => array(
-        'description' => 'The primary identifier.',
-        'type'        => 'serial',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE),
-      'reference' => array(
-        'description' => 'Reference code of message.',
-        'type'        => 'varchar',
-        'length'      => 64,
-        'not null'    => FALSE),
-      'status' => array(
-        'description' => '0=okay 1=error.',
-        'type'        => 'int',
-        'size'        => 'tiny',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE),
-      'number' => array(
-        'description' => 'Node Sender Number.',
-        'type'        => 'varchar',
-        'length'      => 20,
-        'not null'    => TRUE),
-      'message' => array(
-        'description' => 'Message text.',
-        'type'        => 'text',
-        'size'        => 'normal',
-        'not null'    => FALSE),
-      'created' => array(
-        'description' => 'The creation timestamp.',
-        'type'        => 'int',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE),
-      'raw_data' => array(
-        'description' => 'Post Processed Data.',
-        'type'        => 'text',
-        'size'        => 'normal',
-        'not null'    => FALSE),
+    $schema['wsn_platform_management_log'] = array(
+      'description' => 'WSN Platform Management Log for Data Streaming.',
+      'fields' => array(
+        'id' => array(
+          'description' => 'The primary identifier.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'reference' => array(
+          'description' => 'Reference Code of Message.',
+          'type' => 'varchar',
+          'length' => '64',
+          'not null' => FALSE,
+        ),
+        'status' => array(
+          'description' => '0 = Okay, 1 = Error.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'size' => 'tiny',
+          'not null' => TRUE,
+        ),        
+        'data_type' => array(
+          'description' => 'Data type based on identifier.',
+          'type' => 'varchar',
+          'length' => '10',
+          'not null' => TRUE,
+        ),
+        'number' => array(
+          'description' => 'Node Sender Number.',
+          'type' => 'varchar',
+          'length' => '20',
+          'not null' => TRUE,
+        ),
+        'message' => array(
+          'description' => 'Message text.',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'created_datetime' => array(
+          'description' => 'The creation timestamp.',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'post_parsing' => array(
+          'description' => 'Post processed data.',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
       ),
-    'unique keys' => array(),
-    'primary key' => array('id'),
-  );
+      'primary key' => array('id'),
+      'unique keys' => array(
+        'reference' => array('reference')
+      ),
+    );
+
 
   return $schema;
 }
+
