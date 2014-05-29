@@ -15,6 +15,7 @@ function wsn_platform_management_install() {
   variable_set('wsn_suffix',utf8_encode(chr(164)));
   variable_set('wsn_chardec_shift',32);
   variable_set('wsn_chardec_total',95);
+  
 }
 
 /**
@@ -23,6 +24,7 @@ function wsn_platform_management_install() {
  */
 function wsn_platform_management_uninstall() {
   drupal_uninstall_schema('wsn_platform_management_log');
+  drupal_uninstall_schema('wsn_platform_observation');
 }
 
 /**
@@ -87,6 +89,55 @@ function wsn_platform_management_schema() {
         'reference' => array('reference')
       ),
     );
+    
+   $schema['wsn_platform_observation'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'observation_nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'group_nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'unit_nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sensor_nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'timestamp' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'value' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'data_type' => array(
+        'description' => 'Data type based on identifier.',
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('observation_nid'),
+    'indexes' => array(
+      'wsn_parent' => array('group_nid', 'unit_nid', 'sensor_nid'),
+      'observation' => array('timestamp', 'value'),
+    ),
+  );
 
 
   return $schema;

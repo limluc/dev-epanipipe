@@ -158,14 +158,17 @@ function wsn_platform_management_sms_receiver() {
         {
           $rawdata = wsn_platform_management_sms_process_data($parsed_data["data"], $nodesets);
           $status = $rawdata["error"];
-          $textback = $parsed_data["prefix_value"] . 'OK';               
-          if($status==1){
-              $textback = $parsed_data["prefix_value"] . 'ER';
-          }          
+          $textback = $parsed_data["prefix_value"] . 'ER';               
+          if($status==0){
+            $textback = $parsed_data["prefix_value"] . 'OK';
+            wsn_platform_management_insert_datas($nodesets, $rawdata["rawdata"], $status);
+          }
+          echo mb_convert_encoding($textback, "ISO-8859-1");        
           //If not in localhost // Only Development Purposes
           //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
           sms_send($from, $textback);
           //}
+
         }
         break;
     case variable_get('wsn_warning_prefix'): //warning - to be added
@@ -295,12 +298,43 @@ function wsn_platform_management_sms_process_config($text, $nodeset){
 }
 
 function wsn_platform_management_get_nodesets($from){
-  //query to database
-  return array( 
-    "reading_occurence" => 3, 
-    "sensor_number" => 8,
-    "datacompression" => "CHARDEC-32",
-    "water_threshold" => 15,
-    "freq_read" => 1560,
-    "freq_trans" => 4680);
+    //query to database
+    return array( 
+      "reading_occurence" => 3, 
+      "sensor_number" => 8,
+      "datacompression" => "CHARDEC-32",
+      "water_threshold" => 15,
+      "freq_read" => 1560,
+      "freq_trans" => 4680);
+}
+
+function wsn_platform_management_insert_data($sensorset, $created, $value, $type){
+    //FROM TO BE REDIRECT - FOR NODE SET
+    $sensorid = $sensorset["nid"];
+    $result = $id = db_insert('wsn_platform_observation')
+    ->fields(array(
+        'group_nid' => '1',
+        'unit_nid' => '1',
+        'sensor_nid' => $sensorset,
+        'timestamp' => $created,
+        'value' => $value,
+        'data_type' => $type,
+    ))
+    ->execute();
+}
+
+function wsn_platform_management_insert_datas($nodeset, $rawdata, $type){
+    $created = REQUEST_TIME;
+    for($row = 0; $row < $nodeset["reading_occurence"] ; $row ++){
+      $readtime = $created - $row * $nodeset["freq_read"];
+      for($col = 0; $col < $nodeset["sensor_number"] ; $col ++){
+          //db select code order 1 (+1)
+          $sen_id = $col + 1;
+          wsn_platform_management_insert_data($sen_id, $readtime, $rawdata[$col][$row], $type);
+      }
+    }          
+    //If not in localhost // Only Development Purposes
+    //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+    //sms_send($from, $textback);
+    //}
 }
