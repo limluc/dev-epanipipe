@@ -1,0 +1,343 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Wireless Sensor Network (WSN) Platform module.
+ */
+
+/**
+ * Implement hook_install().
+ *
+ */
+function wsnplatform_install() {
+    //TO BE DETERMINED
+    //TEST ITEMS
+    
+    
+    
+}
+
+/**
+ * Implement hook_uninstall().
+ *
+ */
+function wsnplatform_uninstall() {
+    //TO BE DETERMINED
+}
+
+/**
+ * Implement hook_schema().
+ *
+ * @return
+ *   Drupal schema array
+ */
+function wsnplatform_schema() {
+    $schema['wsnplatform_attribute'] = array(
+      'description' => 'Attribute List for Dropdown List - METHOD',
+      'fields' => array(
+        'attribute_nid' => array(
+          'description' => 'Attribute NID',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'domain' => array(
+          'description' => 'List Domain',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => TRUE,
+        ),
+        'akey' => array(
+          'description' => 'List Key',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => FALSE,
+        ),
+        'avalue' => array(
+          'description' => 'List Value',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => FALSE,
+        ),
+        'isactive' => array(
+          'description' => 'Active Set',
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => FALSE,
+          'default' => 1,
+        ),
+      ),
+      'primary key' => array('attribute_nid'),
+      'indexes' => array(
+        'domain' => array('domain'),
+      ),
+    );   
+    $schema['wsnplatform_group'] = array(
+      'description' => 'WSN Platform - Mote Group',
+      'fields' => array(
+        'group_nid' => array(
+          'description' => 'Mote Group ID',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'group_title' => array(
+          'description' => 'Mote Group Title',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'contact_name' => array(
+          'description' => 'Mote Group Contact Name',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('group_nid'),
+      'indexes' => array(
+        'domain' => array('group_title'),
+      ),
+    );
+    $schema['wsnplatform_moteunit'] = array(
+      'description' => 'WSN Platform Schema for MoteUnit',
+      'fields' => array(
+        'moteunit_nid' => array(
+          'description' => 'MoteUnit ID ',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'moteunit_title' => array(
+          'description' => 'MoteUnit Title',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'group_nid' => array(
+          'description' => 'MoteGroup ID',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'input_id' => array(
+          'description' => 'Input ID',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => FALSE,
+        ), 
+        'reading_occurence' => array(
+          'description' => 'How Many Set of Reading Per Message',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'sensor_number' => array(
+          'description' => 'Number of Sensor in a Mode',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'datacompression' => array(
+          'description' => 'Data Compression Technique Used',
+          'type' => 'varchar',
+          'length' => 50,
+          'not null' => TRUE,
+        ),
+        'freq_read' => array(
+          'description' => 'Frequency of Reading',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'freq_trans' => array(
+          'description' => 'Frequency of Transmission',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('moteunit_nid'),
+      'unique keys' => array(
+        'input_id' => array('input_id')
+      ),
+      'indexes' => array(
+        'wsn_hierarchy' => array('group_nid','moteunit_nid'),
+        'moteunit_title' => array('moteunit_title'),
+      ),
+    );
+    $schema['wsnplatform_sensor_model'] = array(
+      'description' => 'Sensor Model Schema for WSN Platform',
+      'fields' => array(
+        'model_nid' => array(
+          'description' => 'Model NID',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'model_title' => array(
+          'description' => 'Model Title',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'scalefactor' => array(
+          'description' => 'Scale Factor',
+          'type' => 'int',
+          'not null' => FALSE,
+          'default' => 1,
+        ),
+        'unit' => array(
+          'description' => 'Unit of Measurement',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => FALSE,
+        ),
+        'callibration_a0' => array(
+          'description' => 'Callibration Polynomial 0',
+          'type' => 'float',
+          'not null' => TRUE,
+          'default' => 0,
+        ),
+        'callibration_a1' => array(
+          'description' => 'Callibration Polynomial 1',
+          'type' => 'float',
+          'not null' => TRUE,
+          'default' => 1,
+        ),
+        'callibration_a2' => array(
+          'description' => 'Callibration Polynomial 2',
+          'type' => 'float',
+          'not null' => TRUE,
+          'default' => 0,
+        ),
+        'operating_max' => array(
+          'description' => 'Sensor Observation Max Value',
+          'type' => 'float',
+          'not null' => FALSE,
+        ),
+        'operating_min' => array(
+          'description' => 'Sensor Observation Min Value',
+          'type' => 'float',
+          'not null' => FALSE,
+        ),
+        'datasheet' => array(
+          'description' => 'Datasheet Link for further details',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('model_nid'),
+      'indexes' => array(
+        'model_title' => array('model_title'),
+      ),
+    );
+    $schema['wsnplatform_sensor'] = array(
+      'description' => 'Sensor Schema for WSN Platform',
+      'fields' => array(
+        'sensor_nid' => array(
+          'description' => 'Sensor ID',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'sensor_title' => array(
+          'description' => 'Sensor Title',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'moteunit_nid' => array(
+          'description' => 'Mote Unit This Sensor Belong To',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'model_nid' => array(
+          'description' => 'This Sensor Model',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'order_number' => array(
+          'description' => 'Order of Sensor in the Mote Unit',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('sensor_nid'),
+      'indexes' => array(
+        'wsn_hierarchy' => array('sensor_nid','moteunit_nid'),
+        'order_number' => array('moteunit_nid', 'order_number'),
+        'model_nid' => array('model_nid'),
+        'sensor_title' => array('sensor_title'),
+      ),
+    );
+
+   $schema['wsnplatform_observation'] = array(
+    'description' => 'Table schema to store measured value',
+    'fields' => array(
+      'observation_nid' => array(
+        'description' => 'Observation ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'moteunit_nid' => array(
+        'description' => 'Mote ID sensor',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'observation_type' => array(
+        'description' => 'Observation Type Measurement.',
+        'type' => 'varchar',
+        'length' => '10',
+        'not null' => TRUE,
+      ),
+      'timestamp' => array(
+        'description' => 'Time of Observation measured',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'value_array' => array(
+        'description' => 'Measured Value Array',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
+      'sensor_one' => array(
+        'description' => 'Measured value for Sensor 1',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_two' => array(
+        'description' => 'Measured value for Sensor 2',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_three' => array(
+        'description' => 'Measured value for Sensor 3',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_four' => array(
+        'description' => 'Measured value for Sensor 4',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_five' => array(
+        'description' => 'Measured value for Sensor 5',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_six' => array(
+        'description' => 'Measured value for Sensor 6',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_seven' => array(
+        'description' => 'Measured value for Sensor 7',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_eight' => array(
+        'description' => 'Measured value for Sensor 8',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('observation_nid'),
+    'indexes' => array(
+      'observation_type' => array('moteunit_nid','timestamp', 'observation_type'),
+    ),
+  );
+  return $schema;
+}
+

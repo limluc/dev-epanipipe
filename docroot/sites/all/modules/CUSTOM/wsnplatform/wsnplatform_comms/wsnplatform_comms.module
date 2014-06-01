@@ -1,0 +1,372 @@
+<?php
+/**
+ * @file
+ * WSN Platform Comms Module for Drupal
+ *
+ * @package wsnplatform
+ * @subpackage wsnplatform_comms
+ */
+
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   URI string
+ * @param $arg
+ *  Page argument array
+ *
+ * @return
+ *   HTML page content string
+ */
+function wsnplatform_comms_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#wsnplatform_comms":
+      $output = t("This module is the gateway for input/output data.");
+      break;
+  }
+  return $output;
+}
+/**
+ * Implements hook_enable().
+ */
+function wsnplatform_comms_enable() {
+  if (variable_get('wsnplatform_comms_archive_set', 0)) {
+    watchdog('wsnplatform_comms', 'WSN Platform Comms archive collector ENABLED');
+  }
+}
+
+
+/**
+ * Implements hook_disable().
+ */
+function wsnplatform_comms_disable() {
+  if (variable_get('wsnplatform_comms_archive_set', 0)) {
+    watchdog('wsnplatform_comms', 'WSN Platform Comms archive collector DISABLED');
+  }
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function wsnplatform_comms_cron() {
+  // Ensure that we only run at most once per hour
+  $last_run = variable_get('wsnplatform_comms_archive_cron_last_run', 0);
+  $time_an_hour_ago = REQUEST_TIME - 3600;
+  if ($last_run <= $time_an_hour_ago) {
+    // Purge the archive
+    wsnplatform_comms_archive_purge();
+    variable_set('wsnplatform_comms_archive_cron_last_run', REQUEST_TIME);
+  }
+}
+
+/**
+ * Implements hook_menu().
+ *
+ * @return
+ *   Drupal menu items array
+ */
+function wsnplatform_comms_menu() {
+  $items = array();
+  $items['admin/wsnplatform/comms'] = array(
+    'title' => 'I/O Data Settings',
+    'description' => 'Settings for I/O Data.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_comms_settings_form'),
+    'access arguments' => array('administer wsnplatform comms'),
+    'file' => 'wsnplatform_comms.admin.inc',
+  );
+  $items['admin/wsnplatform/comms/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/wsnplatform/comms/log'] = array(
+    'title' => 'I/O Data Log',
+    'description' => 'View I/O Data.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_comms_settings_form'),
+    'access arguments' => array('administer wsnplatform comms'),
+    'file' => 'wsnplatform_comms.admin.inc',
+  );
+  $items['wsnplatform/comms/sms_receiver'] = array(
+    'title' => 'WSN Platform SMS Receiver',
+    'page callback' => 'wsnplatform_comms_sms_receiver',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );  
+  return $items;
+}
+
+
+/**
+ * Implementation of hook_views_api
+ * 
+ */
+function wsnplatform_comms_views_api(){
+  return array(
+      'api'=> 3,
+      'path' => drupal_get_path('module', 'wsnplatform_comms') . '/views',
+  );
+}
+
+/**
+ * Write a record to the DB table
+ *
+ * @param $number
+ *   MSISDN of remote
+ * @param $message
+ *   SMS message body string
+ * @param $raw
+ *   Array of additional options
+ * @return
+ *   DB Query result
+ */
+function wsnplatform_comms_archive_write($message_status, $number, $message, $mid, $post_message, $data_type) {
+  //$gw_number = (array_key_exists('gw_number', $options)) ? $options['gw_number'] : NULL;
+  $created = REQUEST_TIME;
+  $result = $id = db_insert('wsnplatform_comms_log')
+  ->fields(array(
+    'reference' => $mid,
+    'message_status' => $message_status,
+    'data_type' => $data_type,
+    'number' => $number,
+    'message' => $message,
+    'created_datetime' => $created,
+    'post_message' => $post_message,
+  ))
+  ->execute();
+}
+
+/**
+ * Receive SMS message and pass it into the SMS Framework
+ */
+function wsnplatform_comms_sms_receiver() {
+   $token = $_REQUEST['token'];
+   $from = $_REQUEST['from'];
+   $to = $_REQUEST['to'];
+   $mid = $_REQUEST['mid'];
+   $text = $_REQUEST['text'];
+   //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';   //testvalue
+   
+   $data = array(
+      'token' => $token,
+      'from' => $from,
+      'to' => $to,
+      'umid' => $mid,
+      'text' => $text,
+    ); 
+   // Calling the real sms gateway function, in this casein this case twowaysms
+   // Future work to make it as an admin Settings - TO BE TESTED
+   //$url =  'http://'. $_SERVER['HTTP_HOST'] . variable_get('wsnplatform_comms_smsgateway');
+   $url =  'http://'. $_SERVER['HTTP_HOST'] . '/sms/twowaysms/receiver';
+   $full_url = url($url, array('query' => $data));
+   drupal_http_request($full_url);
+
+   //passing to main function to be processed
+   wsnplatform_comms_data_io($from, $mid, $text);
+}
+
+/**
+ * Inserting array of observation for various time
+ */
+function wsnplatform_observationarray_insert($moteunit, $datas, $type){
+    $created = REQUEST_TIME;
+    for($row = 0; $row < $moteunit["reading_occurence"] ; $row ++){
+          $readtime = $created - ($row * $moteunit["freq_read"]);
+          wsnplatform_observation_insert($moteunit["moteunit_nid"], $readtime, $datas[$row], $type);
+    }  
+}
+
+/** 
+ * Function to Process Text Message
+ * @param from mid text
+ */
+function wsnplatform_comms_data_io($from, $mid, $text){
+   //initialize array
+   $raw_data = array(
+      "post_message" => 0,
+      "error_status" => 0,
+   );
+   $post_message = array();  
+   //First Step
+   //TO DO: CHECK WSN MODE SCHEMA IF MODE IS VALID BASED ON FORM
+   if(!wsnplatform_moteunit_inputvalidate($from)){
+      $message_status = 1;
+      $data_type = "Unknown Sender";
+      //don't do anything
+   }//invalid sender number
+   else{
+     //registered mode then -> get mode details
+     $moteunit = wsnplatform_moteunit_load($from);
+       
+     //Processing Suffix and Prefixes -> categorising message based on the prefixes
+     //return main messages and prefix
+     $parsed_data = wsnplatform_comms_categorise_message($text);
+     //processing for each type of suffix
+     switch($parsed_data["prefix_value"]){
+      case variable_get('wsnplatform_comms_data_prefix'): //if it is normal data
+          {
+            $raw_data = wsnplatform_comms_sms_process_data($parsed_data["obsdata"], $moteunit);
+            //get status
+            $message_status = $raw_data["error_status"];
+            // if status error
+            $textback = $parsed_data["prefix_value"] . 'ER';               
+            // if status not error = 1
+            if($message_status==1){
+              $textback = $parsed_data["prefix_value"] . 'OK';
+              //call function to insert data
+              wsnplatform_observationarray_insert($moteunit, $raw_data["post_message"], $message_status);
+            }
+            $return_text = t($textback);        
+            //dprint_r($return_text);
+            //If not in localhost // Only Development Purposes
+            //if($_SERVER['SERVER_NAME']!='dev-epanipipe.local') {
+            sms_send($from, $return_text);
+            $data_type = "Normal";
+            //}
+  
+          }
+          break;
+      case variable_get('wsnplatform_comms_warning_prefix'): //warning
+          {
+            $raw_data = wsnplatform_comms_sms_process_warning($parsed_data["obsdata"], $moteunit);
+            
+            $message_status = $raw_data["error_status"];
+            //if error
+            $textback = $parsed_data["prefix_value"] . 'ER';               
+            if($message_status==0){
+                $textback = $parsed_data["prefix_value"] . 'OK';
+                wsnplatform_waterlevel_observation_insert($moteunit, $raw_data["post_message"], $message_status); //to be modified
+            }
+            $return_text = t($textback); 
+            sms_send($from, $return_text);
+            $data_type = "Warning";
+            //}
+          }
+          break;
+      case variable_get('wsnplatform_comms_config_prefix'): //command 
+          {
+            $raw_data = wsnplatform_comms_sms_process_config($parsed_data["obsdata"], $moteunit);
+            $message_status = $raw_data["error_status"];
+            $textback = $parsed_data["prefix_value"] . 'ER';               
+            if($message_status==0){
+                $textback = $raw_data["post_message"];
+            }
+            $return_text = t($textback); 
+            sms_send($from, $return_text);
+            $data_type = "Command";
+            //}
+          }
+          break;
+      default: //unknown - to be added
+          {
+          $message_status = 1;
+          $data_type = "Unknown";
+          }
+          break;
+      }
+     //capture this to local schema
+     $post_message = serialize($raw_data["post_message"]);
+     wsnplatform_comms_archive_write($message_status, $from, $text, $mid, $post_message, $data_type);
+  }//if valid sender
+}
+
+function wsnplatform_comms_datacompression($datacompression){
+      
+    if($datacompression=="CHARDEC-32"){
+      $data_shift = 32;
+      $data_total = 95;      
+    }  
+    //query to database
+    return array( 
+      "data_shift" => $data_shift,
+      "data_total" => $data_total
+      );
+}  
+/**
+ * Clean String UTF-8 Conversion
+ * @param text
+ * @return error or parsed message
+ */
+function wsnplatform_comms_categorise_message($text){
+  $prefix = substr($text,0,2);
+  //Suffix Processing
+  //Determine Length of String
+  $charlen = strpos($text, variable_get('wsnplatform_comms_suffix'));
+  $newtext = substr($text, 2 , $charlen-2);     
+  return array("prefix_value" => $prefix, "obsdata" => $newtext );
+}
+
+/**
+ * Processing normal message
+ * @param text moteunit
+ * 
+ */
+function wsnplatform_comms_sms_process_data($text, $moteunit){
+    if($moteunit["datacompression"] == 'CHARDEC-32'){
+      $datacompression = wsnplatform_comms_datacompression($moteunit["datacompression"]);  
+      //encoding message as it stored in strange ASCCII-80551 UTF-8 format
+      //check btye check
+      $checksum = 0;
+      $post_message = array();
+      
+      $checkbyte = ord(substr($text, -1))-$datacompression["data_shift"];
+      //message
+      $raw = substr($text, 0 , strlen($text) - 1);
+      $rev = strlen($raw);
+      
+      for($row = 0; $row < $moteunit["reading_occurence"] ; $row ++){
+        for($col = 0; $col < $moteunit["sensor_number"] ; $col ++){
+          $post_message[$row][$col] = ord(substr($raw, strlen($raw)-$rev, 1))-$datacompression["data_shift"];
+          $checksum += $post_message[$row][$col];
+          $rev--;
+        }
+      }
+    }
+    //implementing checkbyte errorsum //to be updated
+    if($checkbyte == ($checksum%$datacompression["data_total"])){
+      $error = 0;
+    } 
+    else {
+      $error = 1;
+    }
+    return array("post_message" => $post_message, "error_status" => $error); //to update this to include error messages if possible
+    //return $post_message; 
+}
+/**
+ * Processing warning message
+ * @param text moteunit
+ * @return array post_message error
+ *
+ */
+function wsnplatform_comms_sms_process_warning($text, $moteunit){
+    $error = 0; 
+    $post_message = 0;
+    $raw = substr($text, 0 , strlen($text));
+    
+    if($moteunit["datacompression"] == 'CHARDEC-32'){
+          $post_message = ord($raw) - $datacompression["data_shift"];
+    }
+    return array("post_message" => $post_message, "error" => $error);
+    //return $post_message; 
+}
+/**
+ * Processing config message
+ * @param text moteunit
+ * @return array post_message error
+ */
+function wsnplatform_comms_sms_process_config($text, $moteunit){
+    $error = 0;
+    $post_message = 0;
+    $raw = substr($text, 0 , strlen($text));
+    
+    if($moteunit['datacompression'] == 'CHARDEC-32'){
+      $post_message =  chr($moteunit["water_threshold"] + $datacompression["data_shift"]) . ','.
+                  chr($moteunit["freq_read"] + $datacompression["data_shift"]) . ',' .
+                  chr($moteunit["freq_trans"] + $datacompression["data_shift"]);
+    }
+    return array("post_message" => $post_message, "error" => $error);
+    //return $post_message; 
+}

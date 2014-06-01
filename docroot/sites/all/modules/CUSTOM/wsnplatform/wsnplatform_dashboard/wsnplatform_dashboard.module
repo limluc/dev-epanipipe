@@ -1,0 +1,120 @@
+<?php
+/**
+ * @file
+ * Message tracking feature module for Drupal SMS Framework.
+ *
+ * @package wsnplatform
+ * @subpackage wsnplatform_dashboard
+ */
+
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   URI string
+ * @param $arg
+ *  Page argument array
+ *
+ * @return
+ *   HTML page content string
+ */
+function wsnplatform_dashboard_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#wsnplatform_dashboard":
+      $output = t("<i>TO BE RE-WRITTEN</i>This module uses a database table to store messages, and implements Views for reporting.");
+      break;
+  }
+  return $output;
+}
+
+
+/**
+ * Implements hook_menu().
+ *
+ * @return
+ *   Drupal menu items array
+ */
+function wsnplatform_dashboard_menu() {
+  $items = array();
+  $items['wsnplatform/dashboard/observation'] = array(
+    'title' => 'Charting Example',
+    'page callback' => 'example_chart',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+ 
+  return $items;
+}
+
+/**
+ * Implementation of hook_views_api
+ * 
+ */
+function wsnplatform_dashboard_views_api(){
+  return array(
+      'api'=> 3,
+      'path' => drupal_get_path('module', 'wsnplatform_dashboard') . '/views',
+  );
+}
+
+
+/**
+ * Callback function for menu item.
+ */
+function example_chart() {
+  
+  
+    // Set options.
+  $options = array(
+    'hAxis' => array('title' => 'Horizontal axis title'),
+    'vAxis' => array('title' => 'Vertical axis title'),
+  );
+  $h_axis = array('#legend' => array('Legend for first column.'), '2011-09-01', '2011-09-02');
+  $v_axis = array('#legend' => array('Legend for second column.'), 20.5, 30.2);
+  $chart = array(
+    '#id' => 'chart-id', // This must be unique if you have more charts per page.
+    '#plugin' => 'google_visualization', // Google Charts API will be used
+    '#type' => 'line2D', // To show a simple 2D line chart
+    '#height' => 100, // in pixels
+    '#width' => 150, // in pixels
+    '#color' => '336699', // background color, in RRGGBB format
+    '#title' => t('Title'), // The chart title
+    $h_axis, $v_axis,
+  );
+  $output = charts_chart($chart);
+  // This function draw all charts.
+  google_visualization_charts_draw_all();
+  
+  
+  
+  $data = array(
+    array('fruit' => 'apple', 'votes' => 16),
+    array('fruit' => 'mango', 'votes' => 10),
+    array('fruit' => 'banana', 'votes' => 34),
+    array('fruit' => 'peach', 'votes' => 20),
+    array('fruit' => 'orange', 'votes' => 15),
+  );
+ 
+  $options_column = array(
+    'title' => 'Favourite fruits',
+    'fields' => array(
+      'votes' => array(
+        'label' => t('Votes'),
+        'enabled' => TRUE,
+      ),
+    ),
+    'xAxis' => array(
+      'labelField' => 'fruit',
+    ),
+    'data' => $data,
+    'type' => 'column',
+  );
+ 
+  $build['column'] =  array(
+    '#theme' => 'visualization',
+    '#options' => $options_column,
+  );
+ 
+  return $build;
+}

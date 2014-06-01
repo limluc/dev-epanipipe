@@ -1,0 +1,166 @@
+<?php
+/**
+ * @file
+ * Message tracking feature module for Drupal SMS Framework.
+ *
+ * @package wsnplatform
+ * @subpackage wsnplatform
+ */
+
+/**
+ * Implements hook_help().
+ *
+ * @param $path
+ *   URI string
+ * @param $arg
+ *  Page argument array
+ *
+ * @return
+ *   HTML page content string
+ */
+function wsnplatform_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#wsnplatform":
+      $output = t("<i>TO BE RE-WRITTEN</i>This module uses a database table to store messages, and implements Views for reporting.");
+      break;
+  }
+  return $output;
+}
+
+
+/**
+ * Implements hook_menu().
+ *
+ * @return
+ *   Drupal menu items array
+ */
+function wsnplatform_menu() {
+  $items = array();
+
+  $items['admin/wsnplatform'] = array(
+    'title' => 'WSN Platform',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/wsnplatform/settings'] = array(
+    'title' => 'WSN Platform Settings',
+    'description' => 'WSN Platform Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_settings_form'),
+    'access arguments' => array('WSN Platform: Settings'),
+    'file' => 'wsnplatform.admin.inc',
+  );  
+  $items['wsnplatform/management'] = array(
+    'title' => 'WSN Platform Management',
+    'description' => 'WSN Platform Management',
+    'page callback' => 'wsnplatform_management',
+    'page arguments' => array('wsnplatform_management'),
+    'access arguments' => array('WSN Platform: Management'),
+  );
+  $items['wsnplatform/attribute'] = array(
+    'title' => 'WSN Platform Attribute List',
+    'description' => 'WSN Platform Attribute',
+    'page callback' => 'wsnplatform_attribute',
+    'page arguments' => array('wsnplatform_attribute'),
+    'access arguments' => array('WSN Platform: Attribute'),
+  );
+  $items['wsnplatform/group'] = array(
+    'title' => 'WSN Platform Group',
+    'description' => 'WSN Platform Group',
+    'page callback' => 'wsnplatform_group',
+    'page arguments' => array('wsnplatform_group'),
+    'access arguments' => array('WSN Platform: Group'),
+  );
+  $items['wsnplatform/moteunit'] = array(
+    'title' => 'WSN Platform MoteUnit',
+    'description' => 'WSN Platform MoteUnit',
+    'page callback' => 'wsnplatform_moteunit',
+    'page arguments' => array('wsnplatform_moteunit'),
+    'access arguments' => array('WSN Platform: MoteUnit'),
+  );
+  $items['wsnplatform/sensor_model'] = array(
+    'title' => 'WSN Platform Sensor Model',
+    'description' => 'WSN Platform Sensor Model',
+    'page callback' => 'wsnplatform_sensor_model',
+    'page arguments' => array('wsnplatform_sensor_model'),
+    'access arguments' => array('WSN Platform: Sensor Model'),
+  );
+  $items['wsnplatform/sensor'] = array(
+    'title' => 'WSN Platform Sensor',
+    'description' => 'WSN Platform Sensor',
+    'page callback' => 'wsnplatform_sensor',
+    'page arguments' => array('wsnplatform_sensor'),
+    'access arguments' => array('WSN Platform: Sensor'),
+  );
+  $items['wsnplatform/observation'] = array(
+    'title' => 'WSN Platform Observation',
+    'description' => 'WSN Platform Observation',
+    'page callback' => 'wsnplatform_observation',
+    'page arguments' => array('wsnplatform_observation'),
+    'access arguments' => array('WSN Platform: Observation'),
+  );
+      return $items;
+}
+
+/**
+ * Insert observation for given mote at giventime
+ * @param modeunit, created, value, type
+ */
+function wsnplatform_observation_insert($modeunit, $created, $value, $type){
+      
+    //need to validate sensor first  
+    $result = $id = db_insert('wsnplatform_observation')
+    ->fields(array(
+        'moteunit_nid' => $modeunit,
+        'observation_type' => $type,
+        'timestamp' => $created,
+        'value_array' => serialize($value),
+        'sensor_one' => $value[0],
+        'sensor_two' => $value[1],
+        'sensor_three' => $value[2],
+        'sensor_four' => $value[3],
+        'sensor_five' => $value[4],
+        'sensor_six' => $value[5],
+        'sensor_seven' => $value[6],
+        'sensor_eight' => $value[7],
+    ))
+    ->execute();
+}
+
+/**
+ * Validate Sender
+ * @param from
+ * @return boolean yes/no otherwise mode details otherwise invalid(further development)
+ */
+function wsnplatform_moteunit_inputvalidate($from){
+    $exist = FALSE;  
+    //query to database
+    $result = db_select('wsnplatform_moteunit', 'mote')
+      ->fields('mote')
+      ->condition('mote.input_id', $from)
+      ->execute();
+    
+    ($result->rowCount()) ? $exist = TRUE : $exist = FALSE;
+      return $exist;
+}
+ 
+/**
+ * Get Mote Information
+ */
+function wsnplatform_moteunit_load($from){
+    //query to database
+    $result = db_select('wsnplatform_moteunit', 'mote')
+      ->fields('mote')
+      ->condition('mote.input_id', $from)
+      ->execute();
+       
+    return $result->fetchAssoc();
+    // return array( 
+      // "reading_occurence" => 3, 
+      // "sensor_number" => 8,
+      // "datacompression" => "CHARDEC-32",
+      // "water_threshold" => 15,
+      // "freq_read" => 1560,
+      // "freq_trans" => 4680);
+}

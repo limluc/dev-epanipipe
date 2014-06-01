@@ -1,0 +1,100 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Wireless Sensor Network (WSN) Platform module.
+ */
+
+/**
+ * Implement hook_install().
+ *
+ */
+function wsnplatform_comms_install() {
+  //communication specific variable  
+  variable_set('wsnplatform_comms_data_prefix',utf8_encode(chr(163)));
+  variable_set('wsnplatform_comms_warning_prefix',utf8_encode(chr(165)));
+  variable_set('wsnplatform_comms_config_prefix',utf8_encode(chr(167)));
+  variable_set('wsnplatform_comms_suffix',utf8_encode(chr(164)));
+  //sms communication link
+  variable_set('wsnplatform_comms_smsgateway',"/sms/twowaysms/receiver");
+  variable_set('wsnplatform_comms_archive_max_age_days', 0);
+  variable_set('wsnplatform_comms_archive_set', 1);
+}
+
+/**
+ * Implement hook_uninstall().
+ *
+ */
+function wsnplatform_comms_uninstall() {
+  variable_del('wsnplatform_comms_data_prefix');
+  variable_del('wsnplatform_comms_warning_prefix');
+  variable_del('wsnplatform_comms_config_prefix');
+  variable_del('wsnplatform_comms_suffix');
+  //sms communication link
+  variable_del('wsnplatform_comms_smsgateway');
+}
+
+/**
+ * Implement hook_schema().
+ *
+ * @return
+ *   Drupal schema array
+ */
+function wsnplatform_comms_schema() {
+    $schema['wsnplatform_comms_log'] = array(
+      'description' => 'WSN Platform Management Log for Data Streaming.',
+      'fields' => array(
+        'id' => array(
+          'description' => 'The primary identifier.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'reference' => array(
+          'description' => 'Reference Code of Message.',
+          'type' => 'varchar',
+          'length' => '64',
+          'not null' => FALSE,
+        ),
+        'message_status' => array(
+          'description' => '0 = Okay, 1 = Error.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'size' => 'tiny',
+          'not null' => TRUE,
+        ),        
+        'data_type' => array(
+          'description' => 'Data type based on identifier.',
+          'type' => 'varchar',
+          'length' => '30',
+          'not null' => TRUE,
+        ),
+        'number' => array(
+          'description' => 'Node Sender Number.',
+          'type' => 'varchar',
+          'length' => '20',
+          'not null' => TRUE,
+        ),
+        'message' => array(
+          'description' => 'Message text.',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'created_datetime' => array(
+          'description' => 'The creation timestamp.',
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'post_message' => array(
+          'description' => 'Post processed data.',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('id'),
+      'unique keys' => array(
+        'reference' => array('reference')
+      ),
+    );
+  return $schema;
+}
+

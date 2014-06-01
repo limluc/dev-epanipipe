@@ -1,0 +1,14 @@
+name = WSN Platform Communication
+description = Wireless Sensor Network (WSN) Platform Communication Layer
+package = Wireless Sensor Network (WSN) Platform
+core = 7.x
+
+dependencies[] = sms
+dependencies[] = wsnplatform
+dependencies[] = views
+
+files[] = wsnplatform_comms.install
+files[] = wsnplatform_comms.module
+files[] = wsnplatform_comms.admin.inc
+files[] = views/wsnplatform_comms.views.inc
+files[] = views/wsnplatform_comms.views_default.inc

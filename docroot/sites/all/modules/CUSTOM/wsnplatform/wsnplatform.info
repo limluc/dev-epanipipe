@@ -1,0 +1,7 @@
+name = WSN Platform Structure
+description = Base module of WSN Platform for WSN Structure
+package = Wireless Sensor Network (WSN) Platform
+core = 7.x
+
+files[] = wsnplatform.install
+files[] = wsnplatform.module
