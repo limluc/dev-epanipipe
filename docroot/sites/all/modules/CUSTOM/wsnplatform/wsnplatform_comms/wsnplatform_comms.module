@@ -370,3 +370,29 @@ function wsnplatform_comms_sms_process_config($text, $moteunit){
     return array("post_message" => $post_message, "error" => $error);
     //return $post_message; 
 }
+
+
+/**
+ * Purge all archived messages after a certain number of days
+ *
+ * @param $max_age_days
+ *   Maximum age of tracked messages in days
+ */
+function wsnplatform_comms_archive_purge($max_age_days = NULL) {
+  // Get the configured max_age from the variable table if not given
+  if (is_null($max_age_days)) {
+    $max_age_days = variable_get('wsnplatform_comms_archive_max_age_days', 0);
+  }
+  // Purge with no survivors
+  if ($max_age_days > 0) {
+    $max_age_secs = $max_age_days * 86400;
+    $oldest = REQUEST_TIME - $max_age_secs;
+    // @TODO Please review the conversion of this statement to the D7 database API syntax.
+    /* db_query("DELETE FROM {sms_track} WHERE created < %d", $oldest) */
+    $result = db_delete('wsnplatform_comms_log')
+    ->condition('created', $oldest, '<')
+    ->execute();
+  }
+}
+
+

@@ -16,17 +16,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'attribute_nid',
-        'title' => 'WSN Platfrom Attribute',
+        'title' => 'WSN Platform Attribute',
         'help' => 'Attribute List for Dropdown List - METHOD',
       ),
-      'group' => 'WSN Platfrom Attribute',
+      'group' => 'WSN Platform Attribute',
     ),
     'attribute_nid' => array(
       'title' => 'Attribute Nid',
       'help' => 'Attribute NID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -40,7 +40,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'List Domain',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -54,7 +54,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'List Key',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -68,7 +68,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'List Value',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -82,7 +82,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Active Set',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -97,17 +97,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'group_nid',
-        'title' => 'WSN Platfrom Group',
+        'title' => 'WSN Platform Group',
         'help' => 'WSN Platform - Mote Group',
       ),
-      'group' => 'WSN Platfrom Group',
+      'group' => 'WSN Platform Group',
     ),
     'group_nid' => array(
       'title' => 'Group Nid',
       'help' => 'Mote Group ID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -121,7 +121,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Mote Group Title',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -135,7 +135,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Mote Group Contact Name',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -150,17 +150,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'moteunit_nid',
-        'title' => 'WSN Platfrom Moteunit',
+        'title' => 'WSN Platform Moteunit',
         'help' => 'WSN Platform Schema for MoteUnit',
       ),
-      'group' => 'WSN Platfrom Moteunit',
+      'group' => 'WSN Platform Moteunit',
     ),
     'moteunit_nid' => array(
       'title' => 'Moteunit Nid',
       'help' => 'MoteUnit ID ',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -174,7 +174,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'MoteUnit Title',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -188,7 +188,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'MoteGroup ID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -202,7 +202,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Input ID',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -216,7 +216,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'How Many Set of Reading Per Message',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -230,7 +230,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Number of Sensor in a Mode',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -244,7 +244,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Data Compression Technique Used',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -258,7 +258,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Frequency of Reading',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -272,7 +272,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Frequency of Transmission',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -287,17 +287,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'observation_nid',
-        'title' => 'WSN Platfrom Observation',
+        'title' => 'WSN Platform Observation',
         'help' => 'Table schema to store measured value',
       ),
-      'group' => 'WSN Platfrom Observation',
+      'group' => 'WSN Platform Observation',
     ),
     'observation_nid' => array(
       'title' => 'Observation Nid',
       'help' => 'Observation ID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -311,7 +311,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Mote ID sensor',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric)',
@@ -325,7 +325,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Observation Type Measurement.',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -353,7 +353,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured Value Array',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string)',
@@ -367,7 +367,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 1',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -381,7 +381,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 2',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -395,7 +395,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 3',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -409,7 +409,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 4',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -423,7 +423,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 5',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -437,7 +437,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 6',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -451,7 +451,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 7',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -465,7 +465,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Measured value for Sensor 8',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -480,17 +480,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'sensor_nid',
-        'title' => 'WSN Platfrom Sensor',
+        'title' => 'WSN Platform Sensor',
         'help' => 'Sensor Schema for WSN Platform',
       ),
-      'group' => 'WSN Platfrom Sensor',
+      'group' => 'WSN Platform Sensor',
     ),
     'sensor_nid' => array(
       'title' => 'Sensor Nid',
       'help' => 'Sensor ID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -504,7 +504,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Sensor Title',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string',
@@ -518,7 +518,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Mote Unit This Sensor Belong To',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -532,7 +532,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'This Sensor Model',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -546,7 +546,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Order of Sensor in the Mote Unit',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -561,17 +561,17 @@ function wsnplatform_dashboard_views_data() {
     'table' => array(
       'base' => array(
         'field' => 'model_nid',
-        'title' => 'WSN Platfrom Sensor Model',
+        'title' => 'WSN Platform Sensor Model',
         'help' => 'Sensor Model Schema for WSN Platform',
       ),
-      'group' => 'WSN Platfrom Sensor Model',
+      'group' => 'WSN Platform Sensor Model',
     ),
     'model_nid' => array(
       'title' => 'Model Nid',
       'help' => 'Model NID',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -585,7 +585,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Model Title',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string',
@@ -599,7 +599,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Scale Factor',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -613,7 +613,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Unit of Measurement',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_string',
@@ -627,7 +627,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Callibration Polynomial 0',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -641,7 +641,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Callibration Polynomial 1',
       'field' => array(
         'handler' => 'views_handler_field',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -655,7 +655,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Callibration Polynomial 2',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -669,7 +669,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Sensor Observation Max Value',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -683,7 +683,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Sensor Observation Min Value',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
@@ -697,7 +697,7 @@ function wsnplatform_dashboard_views_data() {
       'help' => 'Datasheet Link for further details',
       'field' => array(
         'handler' => 'views_handler_field_numeric',
-        'click sortable' => FALSE,
+        'click sortable' => TRUE,
       ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',

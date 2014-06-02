@@ -202,7 +202,7 @@ function wsnplatform_dashboard_views_data() {
     $handler->display->display_options['fields']['sensor_eight']['id'] = 'sensor_eight';
     $handler->display->display_options['fields']['sensor_eight']['table'] = 'wsnplatform_observation';
     $handler->display->display_options['fields']['sensor_eight']['field'] = 'sensor_eight';
-    $handler->display->display_options['path'] = 'wsnplatform/dashboard';
+    $handler->display->display_options['path'] = 'wsnplatform/dashboard/observation';
     
     /* Display: WSN Platform Table */
     $handler = $view->new_display('attachment', 'WSN Platform Table', 'attachment_1');

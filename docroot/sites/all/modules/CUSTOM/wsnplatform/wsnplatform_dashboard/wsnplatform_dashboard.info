@@ -8,4 +8,4 @@ dependencies[] = wsnplatform
 files[] = wsnplatform_dashboard.install
 files[] = wsnplatform_dashboard.module
 files[] = views/wsnplatform_dashboard.view.inc
-files[] = views/wsnplatform_dashboard.view_default_inc
+files[] = views/wsnplatform_dashboard.view_default.inc
