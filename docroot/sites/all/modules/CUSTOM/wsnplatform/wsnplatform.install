@@ -11,9 +11,7 @@
 function wsnplatform_install() {
     //TO BE DETERMINED
     //TEST ITEMS
-    
-    
-    
+    variable_set('wsnplatform_comms_wait_new_text', 86400);
 }
 
 /**
@@ -69,7 +67,108 @@ function wsnplatform_schema() {
       'indexes' => array(
         'domain' => array('domain'),
       ),
-    );   
+    );
+    
+    $schema['wsnplatform_datacompression'] = array(
+      'description' => 'TODO: please describe this table!',
+      'fields' => array(
+        'datacompression_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'datacompression_title' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => TRUE,
+        ),
+        'sensor_sensor_delimiter' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '10',
+          'not null' => FALSE,
+        ),
+        'measurand_set_delimiter' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '10',
+          'not null' => FALSE,
+        ),
+        'details' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('datacompression_id'), 
+      'unique keys' => array(
+        'datacompression_id' => array('datacompression_id')
+      ),
+    );
+    $schema['wsnplatform_notification'] = array(
+      'description' => 'TODO: please describe this table!',
+      'fields' => array(
+        'notification_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'size' => 'big',
+          'not null' => TRUE,
+        ),
+        'notification_message' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => TRUE,
+        ),
+        'notification_receiver' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'notification_condition' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('notification_id'),
+      'unique keys' => array(
+        'notification_id' => array('notification_id')
+      ),
+    );
+    $schema['wsnplatform_plant'] = array(
+      'description' => 'TODO: please describe this table!',
+      'fields' => array(
+        'plant_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'plant_type' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => FALSE,
+        ),
+        'plant_startcycle' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'plant_growthstage' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => FALSE,
+        ),
+      ),
+      'primary key' => array('plant_id'),
+      'unique keys' => array(
+        'plant_id' => array('plant_id')
+      ),
+    );
     $schema['wsnplatform_group'] = array(
       'description' => 'WSN Platform - Mote Group',
       'fields' => array(
@@ -90,21 +189,48 @@ function wsnplatform_schema() {
           'length' => '100',
           'not null' => FALSE,
         ),
+        'contact_email_address' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'contact_number' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => FALSE,
+        ),
+        'contact_address' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'contact_language' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => FALSE,
+        ),
+        'contact_details' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
       ),
       'primary key' => array('group_nid'),
       'indexes' => array(
         'domain' => array('group_title'),
       ),
     );
-    $schema['wsnplatform_moteunit'] = array(
+    $schema['wsnplatform_nodeentity'] = array(
       'description' => 'WSN Platform Schema for MoteUnit',
       'fields' => array(
-        'moteunit_nid' => array(
+        'nodeentity_nid' => array(
           'description' => 'MoteUnit ID ',
           'type' => 'serial',
           'not null' => TRUE,
         ),
-        'moteunit_title' => array(
+        'nodeentity_title' => array(
           'description' => 'MoteUnit Title',
           'type' => 'varchar',
           'length' => '100',
@@ -120,7 +246,7 @@ function wsnplatform_schema() {
           'type' => 'varchar',
           'length' => '50',
           'not null' => FALSE,
-        ), 
+        ),
         'reading_occurence' => array(
           'description' => 'How Many Set of Reading Per Message',
           'type' => 'int',
@@ -131,10 +257,9 @@ function wsnplatform_schema() {
           'type' => 'int',
           'not null' => TRUE,
         ),
-        'datacompression' => array(
+        'datacompression_id' => array(
           'description' => 'Data Compression Technique Used',
-          'type' => 'varchar',
-          'length' => 50,
+          'type' => 'int',
           'not null' => TRUE,
         ),
         'freq_read' => array(
@@ -147,14 +272,56 @@ function wsnplatform_schema() {
           'type' => 'int',
           'not null' => TRUE,
         ),
+        'site_location' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'text',
+          'not null' => FALSE,
+        ),
+        'node_elevation' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'node_activity' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '20',
+          'not null' => FALSE,
+        ),
+        'notification_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'last_measured' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'last_text' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'plant_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'input_method' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'varchar',
+          'length' => '50',
+          'not null' => FALSE,
+        ),
       ),
-      'primary key' => array('moteunit_nid'),
+      'primary key' => array('nodeentity_nid'),
       'unique keys' => array(
         'input_id' => array('input_id')
       ),
       'indexes' => array(
-        'wsn_hierarchy' => array('group_nid','moteunit_nid'),
-        'moteunit_title' => array('moteunit_title'),
+        'moteunit_title' => array('nodeentity_title'),
+        'wsn_hierarchy' => array('group_nid', 'nodeentity_nid'),
       ),
     );
     $schema['wsnplatform_sensor_model'] = array(
@@ -237,7 +404,7 @@ function wsnplatform_schema() {
           'length' => '100',
           'not null' => TRUE,
         ),
-        'moteunit_nid' => array(
+        'nodeentity_nid' => array(
           'description' => 'Mote Unit This Sensor Belong To',
           'type' => 'int',
           'not null' => TRUE,
@@ -247,21 +414,35 @@ function wsnplatform_schema() {
           'type' => 'int',
           'not null' => TRUE,
         ),
+        'low_threshold' => array(
+          'description' => 'Low Threshold Criteria',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'high_threshold' => array(
+          'description' => 'High Threshold Criteria',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
         'order_number' => array(
           'description' => 'Order of Sensor in the Mote Unit',
           'type' => 'int',
           'not null' => TRUE,
         ),
+        'notification_id' => array(
+          'description' => 'TODO: please describe this field!',
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
       ),
       'primary key' => array('sensor_nid'),
       'indexes' => array(
-        'wsn_hierarchy' => array('sensor_nid','moteunit_nid'),
-        'order_number' => array('moteunit_nid', 'order_number'),
         'model_nid' => array('model_nid'),
+        'order_number' => array('nodeentity_nid', 'order_number'),
         'sensor_title' => array('sensor_title'),
+        'wsn_hierarchy' => array('sensor_nid', 'nodeentity_nid'),
       ),
     );
-
    $schema['wsnplatform_observation'] = array(
     'description' => 'Table schema to store measured value',
     'fields' => array(
@@ -271,7 +452,7 @@ function wsnplatform_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'moteunit_nid' => array(
+      'nodeentity_nid' => array(
         'description' => 'Mote ID sensor',
         'type' => 'int',
         'not null' => TRUE,
@@ -332,10 +513,20 @@ function wsnplatform_schema() {
         'type' => 'float',
         'not null' => FALSE,
       ),
+      'sensor_nine' => array(
+        'description' => 'Measured value for Sensor 9',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
+      'sensor_ten' => array(
+        'description' => 'Measured value for Sensor 10',
+        'type' => 'float',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('observation_nid'),
     'indexes' => array(
-      'observation_type' => array('moteunit_nid','timestamp', 'observation_type'),
+      'observation_type' => array('nodeentity_nid','timestamp', 'observation_type'),
     ),
   );
   return $schema;

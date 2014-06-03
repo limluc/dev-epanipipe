@@ -156,3 +156,58 @@ table.tablesorter thead tr th:hover {
 ul.menu li{
 	border-bottom: 0px
 }
+
+input.form-text, textarea.form-textarea, select {
+    min-height: 40px;
+
+}
+
+.page-title {
+    display: none;
+}
+
+#banner-inside {
+    padding-top: 0px;
+ }
+ 
+.header-in {
+	padding-top:30px;
+	font-size: 18px;
+	text-align: center;
+	line-height: 100%;
+	font-
+}
+.lead-in {
+	font-size: 30px;
+	font-weight:bolder;
+		line-height: 110%;
+}
+
+.panel-default{
+	background-color: #483D8B;
+	color: #FFA812;
+}
+
+#page-wrapper {
+    padding-left: 10px;
+    padding-right: 10px;
+    }
+    
+.row {
+    margin-right: 14px;
+    margin-left: 15px;
+}
+
+.panel-heading {
+    padding: 5px 10px;
+}
+
+.panel-primary {
+    border-color: #483D8B;
+}
+
+.panel-primary > .panel-heading {
+    color: #FFF;
+    background-color: #483D8B;
+    border-color: #483D8B;
+}

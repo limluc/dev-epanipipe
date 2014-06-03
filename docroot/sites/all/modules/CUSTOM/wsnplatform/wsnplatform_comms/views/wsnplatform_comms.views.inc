@@ -20,10 +20,21 @@ function wsnplatform_comms_views_data() {
         'help' => 'WSN Platform Management Log for Data Streaming.',
       ),
       'group' => 'WSN Platform Comms Log',
+      'join' => array(
+          'wsnplatform_nodeentity' => array(
+            'left_field' => 'input_id',
+            'field' => 'id',
+           ),
+      ),
     ),
     'id' => array(
       'title' => 'Id',
       'help' => 'The primary identifier.',
+       'relationship' => array(
+          'label' => t('Node Identifier'),
+          'base' => 'wsnplatform_nodeentity',
+          'base field' => 'input_id',
+        ),
       'field' => array(
         'handler' => 'views_handler_field_numeric',
         'click sortable' => TRUE,

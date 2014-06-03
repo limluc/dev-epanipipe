@@ -171,11 +171,11 @@ function wsnplatform_comms_sms_receiver() {
 /**
  * Inserting array of observation for various time
  */
-function wsnplatform_observationarray_insert($moteunit, $datas, $type){
+function wsnplatform_comms_observationarray_insert($nodeentity, $datas, $type){
     $created = REQUEST_TIME;
-    for($row = 0; $row < $moteunit["reading_occurence"] ; $row ++){
-          $readtime = $created - ($row * $moteunit["freq_read"]);
-          wsnplatform_observation_insert($moteunit["moteunit_nid"], $readtime, $datas[$row], $type);
+    for($row = 0; $row < $nodeentity["reading_occurence"] ; $row ++){
+          $readtime = $created - ($row * $nodeentity["freq_read"]);
+          wsnplatform_observation_insert($nodeentity["nodeentity_nid"], $readtime, $datas[$row], $type);
     }  
 }
 
@@ -192,14 +192,14 @@ function wsnplatform_comms_data_io($from, $mid, $text){
    $post_message = array();  
    //First Step
    //TO DO: CHECK WSN MODE SCHEMA IF MODE IS VALID BASED ON FORM
-   if(!wsnplatform_moteunit_inputvalidate($from)){
+   if(!wsnplatform_nodeentity_inputvalidate($from)){
       $message_status = 1;
       $data_type = "Unknown Sender";
       //don't do anything
    }//invalid sender number
    else{
      //registered mode then -> get mode details
-     $moteunit = wsnplatform_moteunit_load($from);
+     $nodeentity = wsnplatform_nodeentity_load($from);
        
      //Processing Suffix and Prefixes -> categorising message based on the prefixes
      //return main messages and prefix
@@ -208,16 +208,16 @@ function wsnplatform_comms_data_io($from, $mid, $text){
      switch($parsed_data["prefix_value"]){
       case variable_get('wsnplatform_comms_data_prefix'): //if it is normal data
           {
-            $raw_data = wsnplatform_comms_sms_process_data($parsed_data["obsdata"], $moteunit);
+            $raw_data = wsnplatform_comms_sms_process_data($parsed_data["obsdata"], $nodeentity);
             //get status
             $message_status = $raw_data["error_status"];
             // if status error
             $textback = $parsed_data["prefix_value"] . 'ER';               
             // if status not error = 1
-            if($message_status==1){
+            if($message_status==0){
               $textback = $parsed_data["prefix_value"] . 'OK';
               //call function to insert data
-              wsnplatform_observationarray_insert($moteunit, $raw_data["post_message"], $message_status);
+              wsnplatform_comms_observationarray_insert($nodeentity, $raw_data["post_message"], $message_status);
             }
             $return_text = t($textback);        
             //dprint_r($return_text);
@@ -231,14 +231,14 @@ function wsnplatform_comms_data_io($from, $mid, $text){
           break;
       case variable_get('wsnplatform_comms_warning_prefix'): //warning
           {
-            $raw_data = wsnplatform_comms_sms_process_warning($parsed_data["obsdata"], $moteunit);
+            $raw_data = wsnplatform_comms_sms_process_warning($parsed_data["obsdata"], $nodeentity);
             
             $message_status = $raw_data["error_status"];
             //if error
             $textback = $parsed_data["prefix_value"] . 'ER';               
             if($message_status==0){
                 $textback = $parsed_data["prefix_value"] . 'OK';
-                wsnplatform_waterlevel_observation_insert($moteunit, $raw_data["post_message"], $message_status); //to be modified
+                wsnplatform_waterlevel_observation_insert($nodeentity, $raw_data["post_message"], $message_status); //to be modified
             }
             $return_text = t($textback); 
             sms_send($from, $return_text);
@@ -248,7 +248,7 @@ function wsnplatform_comms_data_io($from, $mid, $text){
           break;
       case variable_get('wsnplatform_comms_config_prefix'): //command 
           {
-            $raw_data = wsnplatform_comms_sms_process_config($parsed_data["obsdata"], $moteunit);
+            $raw_data = wsnplatform_comms_sms_process_config($parsed_data["obsdata"], $nodeentity);
             $message_status = $raw_data["error_status"];
             $textback = $parsed_data["prefix_value"] . 'ER';               
             if($message_status==0){
@@ -301,12 +301,12 @@ function wsnplatform_comms_categorise_message($text){
 
 /**
  * Processing normal message
- * @param text moteunit
+ * @param text nodeentity
  * 
  */
-function wsnplatform_comms_sms_process_data($text, $moteunit){
-    if($moteunit["datacompression"] == 'CHARDEC-32'){
-      $datacompression = wsnplatform_comms_datacompression($moteunit["datacompression"]);  
+function wsnplatform_comms_sms_process_data($text, $nodeentity){
+    if($nodeentity["datacompression_title"] == 'CHARDEC-32'){
+      $datacompression = wsnplatform_comms_datacompression($nodeentity["datacompression_title"]);  
       //encoding message as it stored in strange ASCCII-80551 UTF-8 format
       //check btye check
       $checksum = 0;
@@ -317,8 +317,8 @@ function wsnplatform_comms_sms_process_data($text, $moteunit){
       $raw = substr($text, 0 , strlen($text) - 1);
       $rev = strlen($raw);
       
-      for($row = 0; $row < $moteunit["reading_occurence"] ; $row ++){
-        for($col = 0; $col < $moteunit["sensor_number"] ; $col ++){
+      for($row = 0; $row < $nodeentity["reading_occurence"] ; $row ++){
+        for($col = 0; $col < $nodeentity["sensor_number"] ; $col ++){
           $post_message[$row][$col] = ord(substr($raw, strlen($raw)-$rev, 1))-$datacompression["data_shift"];
           $checksum += $post_message[$row][$col];
           $rev--;
@@ -337,16 +337,16 @@ function wsnplatform_comms_sms_process_data($text, $moteunit){
 }
 /**
  * Processing warning message
- * @param text moteunit
+ * @param text nodeentity
  * @return array post_message error
  *
  */
-function wsnplatform_comms_sms_process_warning($text, $moteunit){
+function wsnplatform_comms_sms_process_warning($text, $nodeentity){
     $error = 0; 
     $post_message = 0;
     $raw = substr($text, 0 , strlen($text));
     
-    if($moteunit["datacompression"] == 'CHARDEC-32'){
+    if($nodeentity["datacompression_title"] == 'CHARDEC-32'){
           $post_message = ord($raw) - $datacompression["data_shift"];
     }
     return array("post_message" => $post_message, "error" => $error);
@@ -354,18 +354,18 @@ function wsnplatform_comms_sms_process_warning($text, $moteunit){
 }
 /**
  * Processing config message
- * @param text moteunit
+ * @param text nodeentity
  * @return array post_message error
  */
-function wsnplatform_comms_sms_process_config($text, $moteunit){
+function wsnplatform_comms_sms_process_config($text, $nodeentity){
     $error = 0;
     $post_message = 0;
     $raw = substr($text, 0 , strlen($text));
     
-    if($moteunit['datacompression'] == 'CHARDEC-32'){
-      $post_message =  chr($moteunit["water_threshold"] + $datacompression["data_shift"]) . ','.
-                  chr($moteunit["freq_read"] + $datacompression["data_shift"]) . ',' .
-                  chr($moteunit["freq_trans"] + $datacompression["data_shift"]);
+    if($nodeentity['datacompression'] == 'CHARDEC-32'){
+      $post_message =  chr($nodeentity["water_threshold"] + $datacompression["data_shift"]) . ','.
+                  chr($nodeentity["freq_read"] + $datacompression["data_shift"]) . ',' .
+                  chr($nodeentity["freq_trans"] + $datacompression["data_shift"]);
     }
     return array("post_message" => $post_message, "error" => $error);
     //return $post_message; 
@@ -395,4 +395,44 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
   }
 }
 
+/**
+ * Custom function for trigger SMS
+ * 
+ */
+ function wsnplatform_comms_result_validate_text($text, $result){
+   //if it is enabled  
+        $query = db_select('wsnplatform_sensor', 'se');
+        $query -> join('wsnplatform_notification', 'nt' , 'nt.notification_id = se.notification_id');
+        $query -> join('wsnplatform_nodeentity', 'ne', 'ne.nodeentity_nid = se.nodeentity_nid');
+        
+        $query
+          -> fields('nt', array('notification_id', 'notification_message', 'notification_receiver', 'notification_condition'))
+          -> fields('ne', array('nodeentity_nid','site_location'))
+          -> fields('se', array('sensor_nid'))
+          -> condition('se.nodeentity_nid',$result);
+        
+          
+        $result2 = $query->execute();
+        $fresult = $result2->fetchAssoc();
+        if(count($fresult)>0){
+            //get weather
+            $weather = 'Weather Forecast '. 'SUNNY';
+            $textback = '';
+            for($i = 0 ; $i < count($text); $i++){
+              $textback = $text[$i]. " ". $textback;
+            }
+            $textback = $textback . " " .$weather;
+                //dpm($textback);    
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, REQUEST_TIME , $textback, 'Notification');
+            sms_send($fresult['notification_receiver'], $textback);
+            
+            $query = db_update('wsnplatform_nodeentity')
+            ->fields(array(
+                'last_text' => REQUEST_TIME,
+              ))
+            ->condition('nodeentity_nid', $result)
+            ->condition('last_text',  REQUEST_TIME + variable_get('wsnplatform_comms_wait_new_text', 0), '<')
+            ->execute();    
+         } //only if last notification is 1 day?
+ }
 

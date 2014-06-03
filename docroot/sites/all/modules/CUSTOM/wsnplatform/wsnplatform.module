@@ -28,7 +28,27 @@ function wsnplatform_help($path, $arg) {
   return $output;
 }
 
-
+/**
+ * Implements hook permission()
+ * 
+ */
+function wsnplatform_permission(){
+  return array(
+    'WSN Platform: Settings' => array(
+      'title' => t('WSN Platform: Settings'),
+      'description' => t('WSN Platform: Settings'),
+    ),
+    'WSN Platform: Management' => array(
+      'title' => t('WSN Platform: Management'),
+      'description' => t('WSN Platform: Management'),
+    ),
+    'WSN Platform: View' => array(
+      'title' => t('WSN Platform: View'),
+      'description' => t('WSN Platform: View'),
+    ),
+  );
+}
+ 
 /**
  * Implements hook_menu().
  *
@@ -40,8 +60,12 @@ function wsnplatform_menu() {
 
   $items['admin/wsnplatform'] = array(
     'title' => 'WSN Platform',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
     'weight' => 0,
+    'file path' => drupal_get_path('module', 'system'),
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('WSN Platform: Settings'),
+    'file' => 'wsnplatform.admin.inc',
   );
   $items['admin/wsnplatform/settings'] = array(
     'title' => 'WSN Platform Settings',
@@ -50,82 +74,421 @@ function wsnplatform_menu() {
     'page arguments' => array('wsnplatform_settings_form'),
     'access arguments' => array('WSN Platform: Settings'),
     'file' => 'wsnplatform.admin.inc',
+    'weight' => 10,
   );  
-  $items['wsnplatform/management'] = array(
-    'title' => 'WSN Platform Management',
-    'description' => 'WSN Platform Management',
-    'page callback' => 'wsnplatform_management',
-    'page arguments' => array('wsnplatform_management'),
-    'access arguments' => array('WSN Platform: Management'),
+  //Main menu items
+  $items['wsnplatform'] = array(
+    'title' => 'WSN Platform',
+    'description' => 'WSN Platform',
+    'page callback' => 'wsnplatform_main_content',
+    'access arguments' => array('WSN Platform: View'),
+    'menu_name' => 'main-menu',
+    'weight' => 1,
   );
-  $items['wsnplatform/attribute'] = array(
-    'title' => 'WSN Platform Attribute List',
-    'description' => 'WSN Platform Attribute',
-    'page callback' => 'wsnplatform_attribute',
-    'page arguments' => array('wsnplatform_attribute'),
-    'access arguments' => array('WSN Platform: Attribute'),
-  );
+  
   $items['wsnplatform/group'] = array(
-    'title' => 'WSN Platform Group',
-    'description' => 'WSN Platform Group',
-    'page callback' => 'wsnplatform_group',
-    'page arguments' => array('wsnplatform_group'),
-    'access arguments' => array('WSN Platform: Group'),
+    'title' => 'Group',
+    'description' => 'View WSN Platform Group',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_group_view',
+    'weight' => 6,
+    'file' => 'wsnplatform.management.inc',
   );
-  $items['wsnplatform/moteunit'] = array(
-    'title' => 'WSN Platform MoteUnit',
-    'description' => 'WSN Platform MoteUnit',
-    'page callback' => 'wsnplatform_moteunit',
-    'page arguments' => array('wsnplatform_moteunit'),
-    'access arguments' => array('WSN Platform: MoteUnit'),
+  $items['wsnplatform/group/add'] = array(
+    'title' => 'Add Group',
+    'description' => 'Add WSN Platform Group',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_group_form'),
+    'file' => 'wsnplatform.management.inc',
+    'weight' => 7,
   );
-  $items['wsnplatform/sensor_model'] = array(
-    'title' => 'WSN Platform Sensor Model',
-    'description' => 'WSN Platform Sensor Model',
-    'page callback' => 'wsnplatform_sensor_model',
-    'page arguments' => array('wsnplatform_sensor_model'),
-    'access arguments' => array('WSN Platform: Sensor Model'),
+  $items['wsnplatform/nodeentity'] = array(
+    'title' => 'Node Entity',
+    'description' => 'View WSN Platform Node Entity',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_nodeentity_view',
+    'weight' => 8,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/nodeentity/add'] = array(
+    'title' => 'Add Node Entity',
+    'description' => 'Add WSN Platform Node Entity',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_nodeentity_form'),
+    'file' => 'wsnplatform.management.inc',
+    'weight' => 9,
   );
   $items['wsnplatform/sensor'] = array(
-    'title' => 'WSN Platform Sensor',
-    'description' => 'WSN Platform Sensor',
-    'page callback' => 'wsnplatform_sensor',
-    'page arguments' => array('wsnplatform_sensor'),
-    'access arguments' => array('WSN Platform: Sensor'),
+    'title' => 'Sensor',
+    'description' => 'View WSN Platform Sensor',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_sensor_view',
+    'weight' => 10,
+    'file' => 'wsnplatform.management.inc',
   );
-  $items['wsnplatform/observation'] = array(
-    'title' => 'WSN Platform Observation',
-    'description' => 'WSN Platform Observation',
-    'page callback' => 'wsnplatform_observation',
-    'page arguments' => array('wsnplatform_observation'),
-    'access arguments' => array('WSN Platform: Observation'),
+  $items['wsnplatform/sensor/add'] = array(
+    'title' => 'Add Sensor',
+    'description' => 'Add WSN Platform Sensor',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_sensor_form'),
+    'weight' => 11,
+    'file' => 'wsnplatform.management.inc',
   );
-      return $items;
+  $items['wsnplatform/sensormodel'] = array(
+    'title' => 'Sensor Model',
+    'description' => 'View WSN Platform Sensor Model',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_sensormodel_view',
+    'weight' => 12,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/sensormodel/add'] = array(
+    'title' => 'Add Sensor Model',
+    'description' => 'Add WSN Platform Sensor Model',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_sensormodel_form'),
+    'weight' => 13,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/attribute'] = array(
+    'title' => 'Attribute',
+    'description' => 'View WSN Platform Attribute',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_attribute_view',
+    'weight' => 14,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/attribute/add'] = array(
+    'title' => 'Add Attribute',
+    'description' => 'Add WSN Platform Attribute',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_attribute_form'),
+    'weight' => 15,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/datacompression'] = array(
+    'title' => 'Data Compression',
+    'description' => 'View WSN Platform Data Compression',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_datacompression_view',
+    'weight' => 16,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/datacompression/add'] = array(
+    'title' => 'Add Data Compression',
+    'description' => 'Add WSN Platform Data Compression',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_datacompression_form'),
+    'weight' => 17,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/notification'] = array(
+    'title' => 'Notification',
+    'description' => 'View WSN Platform Notification',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_notification_view',
+    'weight' => 18,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/notification/add'] = array(
+    'title' => 'Add Notification',
+    'description' => 'Add WSN Platform Notification',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_notification_form'),
+    'file' => 'wsnplatform.management.inc',
+    'weight' => 19,
+  );
+  $items['wsnplatform/plant'] = array(
+    'title' => 'Plant Characteristic',
+    'description' => 'View WSN Platform Plant Characteristic',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_plant_view',
+    'weight' => 20,
+    'file' => 'wsnplatform.management.inc',
+  );
+  $items['wsnplatform/plant/add'] = array(
+    'title' => 'Add Plant',
+    'description' => 'Add WSN Platform Plant',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: Management'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('wsnplatform_plant_form'),
+    'weight' => 21,
+    'file' => 'wsnplatform.management.inc',
+  );
+
+
+
+  //Dashboard Branch
+  $items['wsnplatformdashboard'] = array(
+    'title' => 'WSN Platform Dashboard',
+    'description' => 'WSN Platform Dashboard',
+    'page callback' => 'wsnplatform_dashboard_content',
+    'access arguments' => array('WSN Platform: View'),
+    'menu_name' => 'main-menu',
+    'weight' => -20,
+  );
+  
+  $items['wsnplatformdashboard/group'] = array(
+    'title' => 'Overall View',
+    'description' => 'WSN Platform Dashboard Overall View',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_dashboard_group',
+    'weight' => 20,
+    'file' => 'wsnplatform.dashboard.inc',
+  );
+  $items['wsnplatformdashboard/node'] = array(
+    'title' => 'Node Unit View',
+    'description' => 'WSN Platform Dashboard Node View',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_dashboard_node',
+    'weight' => 21,
+    'file' => 'wsnplatform.dashboard.inc',
+  );
+  $items['wsnplatformdashboard/multi'] = array(
+    'title' => 'Multi View',
+    'description' => 'WSN Platform Dashboard Multi View',
+    'type' => MENU_NORMAL_ITEM,
+    'menu_name' => 'main-menu',
+    'access arguments' => array('WSN Platform: View'),
+    'page callback' => 'wsnplatform_dashboard_multi',
+    'weight' => 22,
+    'file' => 'wsnplatform.dashboard.inc',
+  );
+  
+  
+  return $items;
 }
+
+/**
+ * Custom
+ * 
+ */
+function wsnplatform_main_content(){
+  $content['raw_markup'] = array(
+    '#type' => 'markup',
+    '#markup' => '
+    <div class = "panel-default">
+    <div class = "panel-body"><div class="header-in"><p class ="lead-in">WSN Platform</p></div>
+    </div></div>
+    <div class = "panel-default">
+    <div class = "panel-body">    
+    <div class="row">
+      <div class="col-md-4" align="center"><a href="wsnplatform/group" title="WSN Platform Group">
+          <h1><p><span class="glyphicon glyphicon-user"></span></p></h1></n><h4><p>Group</p></h4><p></p></a>
+      </div>    
+      <div class="col-md-4" align="center"><a href="wsnplatform/nodeentity" title="WSN Platform Nodeentity">
+          <h1><p><span class="glyphicon glyphicon-info-sign"></span></p></h1></n><h4><p>Node Entity</p></h4><p></p></a>
+      </div>            
+      <div class="col-md-4" align="center"><a href="wsnplatform/sensor" title="WSN Platform Sensor">
+          <h1><p><span class="glyphicon glyphicon-camera"></span></p></h1></n><h4><p>Sensor</p></h4><p></p></a>
+      </div>
+    </div>            
+    <div class="row">
+      <div class="col-md-4" align="center"><a href="wsnplatform/sensormodel" title="WSN Platform Sensor Model">
+          <h1><p><span class="glyphicon glyphicon-comment   "></span></p></h1></n><h4><p>Sensor Model</p></h4><p></p></a>
+      </div>    
+      <div class="col-md-4" align="center"><a href="wsnplatform/plant" title="WSN Platform Plant">
+          <h1><p><span class="glyphicon glyphicon-leaf"></span></p></h1></n><h4><p>Plant Characteristic</p></h4><p></p></a>
+      </div>            
+      <div class="col-md-4" align="center"><a href="wsnplatform/notification" title="WSN Platform Notification">
+          <h1><p><span class="glyphicon glyphicon-phone"></span></p></h1></n><h4><p>Notification</p></h4><p></p></a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4" align="center"><a href="wsnplatform/datacompression" title="WSN Platform Data Compression">
+          <h1><p><span class="glyphicon glyphicon-compressed"></span></p></h1></n><h4><p>Data Compression</p></h4><p></p></a>
+      </div>    
+      <div class="col-md-4" align="center"><a href="wsnplatform/attribute" title="WSN Platform Attribute">
+          <h1><p><span class="glyphicon glyphicon-list-alt"></span></p></h1></n><h4><p>Attributes</p></h4><p></p></a>
+      </div>            
+    </div>     </div>            
+    </div>',
+  );
+  return $content;
+}
+
+
+
+/**
+ * Custom
+ * 
+ */
+function wsnplatform_dashboard_content(){
+  $content['raw_markup'] = array(
+    '#type' => 'markup',
+    '#markup' => '
+    <div class = "panel-default">
+    <div class = "panel-body"><div class="header-in"><p class ="lead-in">WSN Platform Dashboard</p></div>
+    </div></div>
+    <div class = "panel-default">
+    <div class = "panel-body">    
+    <div class="row">
+      <div class="col-md-4" align="center"><a href="wsnplatformdashboard/group" title="Overall">
+          <h1><p><span class="glyphicon glyphicon-th"></span></p></h1></n><h4><p>Overall</p></h4><p></p></a>
+      </div>    
+      <div class="col-md-4" align="center"><a href="wsnplatformdashboard/node" title="Node">
+          <h1><p><span class="glyphicon glyphicon-picture"></span></p></h1></n><h4><p>Node Unit</p></h4><p></p></a>
+      </div>            
+      <div class="col-md-4" align="center"><a href="wsnplatformdashboard/mullti" title="Map">
+          <h1><p><span class="glyphicon glyphicon-map-marker"></span></p></h1></n><h4><p>Multi View</p></h4><p></p></a>
+      </div>
+    </div>            
+    </div>            
+    </div>',
+  );
+  return $content;
+}
+ 
+/**
+ * Insert observation for given mote at giventime - WRITTEN TO INCLUDE CALLIBRATION
+ * @param modeunit, created, value, type
+ */
+function wsnplatform_observation_insert($modeunit, $created, $value, $type){
+    $notiftext = array();
+    $newvalue = array();
+    for($i= 0; $i < count($value); $i++){
+        //query to database
+        $query = db_select('wsnplatform_sensor', 'se');
+        $query -> join('wsnplatform_sensor_model', 'sm' , 'sm.model_nid = se.model_nid');
+        $query
+          -> fields('se', array('sensor_nid','sensor_title','nodeentity_nid','model_nid','low_threshold','high_threshold','order_number', 'notification_id'))
+          -> fields('sm', array('unit','model_title','callibration_a0','callibration_a1','callibration_a2','operating_max','operating_min'))
+          -> condition('se.order_number',$i+1)
+          -> condition('se.nodeentity_nid', $modeunit);
+        $result1 = $query->execute();
+        $fresult1 = $result1->fetchAssoc();
+        
+        $newvalue[$i] = $value[$i]*$fresult1['callibration_a2']*$fresult1['callibration_a2'] +
+                        $value[$i]*$fresult1['callibration_a1'] +
+                        $fresult1['callibration_a0'];
+      //function for quick check
+      if($fresult1['notification_id']){
+          if($newvalue < $fresult1['low_threshold']){
+              $notitext[] = $fresult1['sensor_title'] . " is LOW"; 
+          }
+          if($newvalue > $fresult1['high_threshold']){
+              $notitext[] = $fresult1['sensor_title'] . " is HIGH"; 
+          }
+      }
+    }
+
+    wsnplatform_comms_result_validate_text($notitext, $modeunit);
+    $query = db_update('wsnplatform_nodeentity')
+      ->fields(array(
+          'last_measured' => $created,
+        ))
+      ->condition('nodeentity_nid', $modeunit)
+      ->condition('last_measured',  $created, '<')
+      ->execute();
+    //need to validate sensor first  
+    $result = $id = db_insert('wsnplatform_observation')
+    ->fields(array(
+        'nodeentity_nid' => $modeunit,
+        'observation_type' => $type,
+        'timestamp' => $created,
+        'value_array' => serialize($newvalue),
+        'sensor_one' => $newvalue[0],
+        'sensor_two' => $newvalue[1],
+        'sensor_three' => $newvalue[2],
+        'sensor_four' => $newvalue[3],
+        'sensor_five' => $newvalue[4],
+        'sensor_six' => $newvalue[5],
+        'sensor_seven' => $newvalue[6],
+        'sensor_eight' => $newvalue[7],
+        'sensor_nine' => $newvalue[8],
+        'sensor_ten' => $newvalue[9],
+    ))
+    ->execute();
+}
+
+
 
 /**
  * Insert observation for given mote at giventime
  * @param modeunit, created, value, type
  */
-function wsnplatform_observation_insert($modeunit, $created, $value, $type){
-      
-    //need to validate sensor first  
-    $result = $id = db_insert('wsnplatform_observation')
-    ->fields(array(
-        'moteunit_nid' => $modeunit,
-        'observation_type' => $type,
-        'timestamp' => $created,
-        'value_array' => serialize($value),
-        'sensor_one' => $value[0],
-        'sensor_two' => $value[1],
-        'sensor_three' => $value[2],
-        'sensor_four' => $value[3],
-        'sensor_five' => $value[4],
-        'sensor_six' => $value[5],
-        'sensor_seven' => $value[6],
-        'sensor_eight' => $value[7],
-    ))
-    ->execute();
+// function wsnplatform_observation_insert($modeunit, $created, $value, $type){
+    // $query = db_update('wsnplatform_nodeentity')
+      // ->fields(array(
+          // 'last_measured' => $created,
+        // ))
+      // ->condition('nodeentity_nid', $modeunit)
+      // ->condition('last_measured',  $created, '<')
+      // ->execute();
+// 
+    // //need to validate sensor first  
+    // $result = $id = db_insert('wsnplatform_observation')
+    // ->fields(array(
+        // 'nodeentity_nid' => $modeunit,
+        // 'observation_type' => $type,
+        // 'timestamp' => $created,
+        // 'value_array' => serialize($value),
+        // 'sensor_one' => $value[0],
+        // 'sensor_two' => $value[1],
+        // 'sensor_three' => $value[2],
+        // 'sensor_four' => $value[3],
+        // 'sensor_five' => $value[4],
+        // 'sensor_six' => $value[5],
+        // 'sensor_seven' => $value[6],
+        // 'sensor_eight' => $value[7],
+        // 'sensor_nine' => $value[8],
+        // 'sensor_ten' => $value[9],
+    // ))
+    // ->execute();
+// }
+
+/**
+ * Implementation of hook_views_api
+ * 
+ */
+function wsnplatform_views_api(){
+  return array(
+      'api'=> 3,
+      'path' => drupal_get_path('module', 'wsnplatform') . '/views',
+  );
 }
 
 /**
@@ -133,12 +496,12 @@ function wsnplatform_observation_insert($modeunit, $created, $value, $type){
  * @param from
  * @return boolean yes/no otherwise mode details otherwise invalid(further development)
  */
-function wsnplatform_moteunit_inputvalidate($from){
+function wsnplatform_nodeentity_inputvalidate($from){
     $exist = FALSE;  
     //query to database
-    $result = db_select('wsnplatform_moteunit', 'mote')
-      ->fields('mote')
-      ->condition('mote.input_id', $from)
+    $result = db_select('wsnplatform_nodeentity', 'nodeentity')
+      ->fields('nodeentity')
+      ->condition('nodeentity.input_id', $from)
       ->execute();
     
     ($result->rowCount()) ? $exist = TRUE : $exist = FALSE;
@@ -148,19 +511,25 @@ function wsnplatform_moteunit_inputvalidate($from){
 /**
  * Get Mote Information
  */
-function wsnplatform_moteunit_load($from){
+function wsnplatform_nodeentity_load($from){
     //query to database
-    $result = db_select('wsnplatform_moteunit', 'mote')
-      ->fields('mote')
-      ->condition('mote.input_id', $from)
-      ->execute();
+    $query = db_select('wsnplatform_nodeentity', 'ne');
+    $query -> join('wsnplatform_datacompression', 'dc' , 'dc.datacompression_id = ne.datacompression_id');
+    $query
+      -> fields('ne', array('nodeentity_nid','datacompression_id','input_id', 'reading_occurence', 'sensor_number', 'freq_read', 'freq_trans'))
+      -> fields('dc', array('datacompression_id','datacompression_title'))
+      -> condition('ne.input_id', $from);
+      
+    $result = $query->execute();
        
     return $result->fetchAssoc();
     // return array( 
       // "reading_occurence" => 3, 
       // "sensor_number" => 8,
-      // "datacompression" => "CHARDEC-32",
+      // "datacompression" => "CHARDEC-32", //need to pull from datacompression ID
       // "water_threshold" => 15,
       // "freq_read" => 1560,
       // "freq_trans" => 4680);
 }
+
+
