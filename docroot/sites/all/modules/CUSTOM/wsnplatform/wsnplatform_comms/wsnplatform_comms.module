@@ -414,7 +414,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
           
         $result2 = $query->execute();
         $fresult = $result2->fetchAssoc();
-        if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text'))){
+        if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < (REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text')))){
             //get weather
             $weather = 'Weather Forecast '. 'SUNNY';
             $textback = '';
@@ -422,9 +422,8 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
               $textback = $text[$i]. " ". $textback;
             }
             $textback = $textback . " " .$weather;
-                //dpm($textback);    
-            //wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $textback, 'Notification');
             
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $textback, 'Notification');
             //sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
