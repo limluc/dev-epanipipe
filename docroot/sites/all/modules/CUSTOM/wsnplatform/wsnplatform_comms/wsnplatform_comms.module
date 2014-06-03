@@ -148,7 +148,7 @@ function wsnplatform_comms_sms_receiver() {
    $to = $_REQUEST['to'];
    $mid = $_REQUEST['mid'];
    $text = $_REQUEST['text'];
-   //$text = '£8K8ssa8KLaC8aK88aKLC8aKaaa88KLaCss4¤@';   //testvalue
+   //$text = '£+6 6 L!Za +6 6 L!Za +6 6 L!Za $¤@';   //testvalue
    
    $data = array(
       'token' => $token,
@@ -424,7 +424,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
             $textback = $textback . " " .$weather;
             
             wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $textback, 'Notification');
-            //sms_send($fresult['notification_receiver'], $textback);
+            sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
             ->fields(array(
