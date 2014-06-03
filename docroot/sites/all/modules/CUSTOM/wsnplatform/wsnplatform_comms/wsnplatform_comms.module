@@ -148,13 +148,13 @@ function wsnplatform_comms_sms_receiver() {
    $to = $_REQUEST['to'];
    $mid = $_REQUEST['mid'];
    $text = $_REQUEST['text'];
-   //$text = '£8K88KL#C8K88KL#C8K88KL#C4¤@';   //testvalue
+   //$text = '£8K8ssa8KLaC8aK88aKLC8aKaaa88KLaCss4¤@';   //testvalue
    
    $data = array(
       'token' => $token,
       'from' => $from,
       'to' => $to,
-      'umid' => $mid,
+      'mid' => $mid,
       'text' => $text,
     ); 
    // Calling the real sms gateway function, in this casein this case twowaysms
@@ -407,14 +407,14 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
         
         $query
           -> fields('nt', array('notification_id', 'notification_message', 'notification_receiver', 'notification_condition'))
-          -> fields('ne', array('nodeentity_nid','site_location'))
+          -> fields('ne', array('nodeentity_nid','site_location', 'last_text'))
           -> fields('se', array('sensor_nid'))
           -> condition('se.nodeentity_nid',$result);
         
           
         $result2 = $query->execute();
         $fresult = $result2->fetchAssoc();
-        if(count($fresult)>0){
+        if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text'))){
             //get weather
             $weather = 'Weather Forecast '. 'SUNNY';
             $textback = '';
@@ -423,7 +423,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
             }
             $textback = $textback . " " .$weather;
                 //dpm($textback);    
-            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, REQUEST_TIME , $textback, 'Notification');
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, rand(), $textback, 'Notification');
             sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
@@ -431,7 +431,6 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
                 'last_text' => REQUEST_TIME,
               ))
             ->condition('nodeentity_nid', $result)
-            ->condition('last_text',  REQUEST_TIME + variable_get('wsnplatform_comms_wait_new_text', 0), '<')
             ->execute();    
          } //only if last notification is 1 day?
  }

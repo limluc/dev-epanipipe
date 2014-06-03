@@ -292,6 +292,7 @@ function wsnplatform_schema() {
           'description' => 'TODO: please describe this field!',
           'type' => 'int',
           'not null' => FALSE,
+          'default' => 0,
         ),
         'last_measured' => array(
           'description' => 'TODO: please describe this field!',
