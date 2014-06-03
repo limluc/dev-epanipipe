@@ -423,7 +423,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
             }
             $textback = $textback . " " .$weather;
                 //dpm($textback);    
-            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, rand(), $textback, 'Notification');
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $textback, 'Notification');
             sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
