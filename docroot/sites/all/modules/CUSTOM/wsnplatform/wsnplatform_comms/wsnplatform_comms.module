@@ -238,7 +238,11 @@ function wsnplatform_comms_data_io($from, $mid, $text){
             $textback = $parsed_data["prefix_value"] . 'ER';               
             if($message_status==0){
                 $textback = $parsed_data["prefix_value"] . 'OK';
-                wsnplatform_waterlevel_observation_insert($nodeentity, $raw_data["post_message"], $message_status); //to be modified
+                wsnplatform_waterlevel_observation_insert($nodeentity, $raw_data["post_message"], $message_status); 
+                //to be modified
+                //to be modified
+                //to be modified
+                //to be modified
             }
             $return_text = t($textback); 
             sms_send($from, $return_text);
@@ -404,14 +408,11 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
         $query = db_select('wsnplatform_sensor', 'se');
         $query -> join('wsnplatform_notification', 'nt' , 'nt.notification_id = se.notification_id');
         $query -> join('wsnplatform_nodeentity', 'ne', 'ne.nodeentity_nid = se.nodeentity_nid');
-        
         $query
           -> fields('nt', array('notification_id', 'notification_message', 'notification_receiver', 'notification_condition'))
           -> fields('ne', array('nodeentity_nid','site_location', 'last_text'))
           -> fields('se', array('sensor_nid'))
           -> condition('se.nodeentity_nid',$result);
-        
-          
         $result2 = $query->execute();
         $fresult = $result2->fetchAssoc();
         if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < (REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text')))){

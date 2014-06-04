@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * View WSN Platform Group
  */
@@ -27,7 +26,8 @@
     t('Contact Number'),
     t('Contact Address'),
     t('Contact Language'),
-    t('Other Details')
+    t('Other Details'),
+    t('Operation')
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -39,7 +39,10 @@
       check_plain($result->contact_number),
       check_plain($result->contact_address),
       check_plain($result->contact_language),
-      check_plain($result->contact_details)
+      check_plain($result->contact_details),
+      "<a href='wsnplatform/sensormodel/edit/".$result->group_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/sensormodel/delete/".$result->group_nid."'>" . t('Delete') . "</a>",
+      
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -146,6 +149,7 @@ function wsnplatform_group_form_submit($form, &$form_state){
     t('Last Sent Text'),    
     t('Plant ID'),
     t('Input Method'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -167,6 +171,8 @@ function wsnplatform_group_form_submit($form, &$form_state){
       check_plain($result->last_text),
       check_plain($result->plant_id),
       check_plain($result->input_method),
+      "<a href='wsnplatform/nodeentity/edit/".$result->nodeentity_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/nodeentity/delete/".$result->nodeentity_nid."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -310,6 +316,7 @@ function wsnplatform_nodeentity_form_submit($form, &$form_state){
     t('Sensor Observation Max Value'),
     t('Sensor Observation Min Value'),
     t('Datasheet'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -324,6 +331,8 @@ function wsnplatform_nodeentity_form_submit($form, &$form_state){
       check_plain($result->operating_max),
       check_plain($result->operating_min),
       check_plain($result->datasheet),
+      "<a href='wsnplatform/sensormodel/edit/".$result->model_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/sensormodel/delete/".$result->model_nid."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -437,6 +446,7 @@ function wsnplatform_sensormodel_form_submit($form, &$form_state){
     t('Sensor Model'),
     t('Order of Sensor'),
     t('Notification ID'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -449,6 +459,8 @@ function wsnplatform_sensormodel_form_submit($form, &$form_state){
       check_plain($result->model_nid),
       check_plain($result->order_number),
       check_plain($result->notification_id),
+      "<a href='wsnplatform/sensor/edit/".$result->sensor_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/sensor/delete/".$result->sensor_nid."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -505,7 +517,6 @@ function wsnplatform_sensormodel_form_submit($form, &$form_state){
   '#type' => 'submit',
   '#value' => t('Add Item'),
   );
-  
   return $form;
 }
 
@@ -543,6 +554,7 @@ function wsnplatform_sensor_form_submit($form, &$form_state){
     t('List Key'),
     t('List Value'),
     t('Active Set'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -552,6 +564,8 @@ function wsnplatform_sensor_form_submit($form, &$form_state){
       check_plain($result->akey),
       check_plain($result->avalue),
       check_plain($result->isactive),
+      "<a href='wsnplatform/attribute/edit/".$result->attribute_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/attribute/delete/".$result->attribute_nid."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -625,6 +639,7 @@ function wsnplatform_attribute_form_submit($form, &$form_state){
     t('Sensor Sensor Delimiter'),
     t('Measurand Set Delimiter'),
     t('Details'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -634,6 +649,8 @@ function wsnplatform_attribute_form_submit($form, &$form_state){
       check_plain($result->sensor_sensor_delimiter),
       check_plain($result->measurand_set_delimiter),
       check_plain($result->details),
+      "<a href='wsnplatform/datacompression/edit/".$result->datacompression_id."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/datacompression/delete/".$result->datacompression_id."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -707,6 +724,7 @@ function wsnplatform_datacompression_form_submit($form, &$form_state){
     t('Notification Message'),
     t('Notification Receiver No.'),
     t('Notification Condition'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -715,6 +733,8 @@ function wsnplatform_datacompression_form_submit($form, &$form_state){
       check_plain($result->notification_message),
       check_plain($result->notification_receiver),
       check_plain($result->notification_condition),
+      "<a href='wsnplatform/notification/edit/".$result->notification_id."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/notification/delete/".$result->notification_id."'>" . t('Delete') . "</a>",
     );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
@@ -782,6 +802,7 @@ function wsnplatform_notification_form_submit($form, &$form_state){
     t('Plant Type'),
     t('Plant Start Cycle'),
     t('Plant Growth Stage'),
+    t('Operation'),
    );
   $rows = array(); 
   foreach($results AS $result){
@@ -790,7 +811,9 @@ function wsnplatform_notification_form_submit($form, &$form_state){
       check_plain($result->plant_type),
       check_plain($result->plant_startcycle),
       check_plain($result->plant_growthstage),
-    );
+      "<a href='wsnplatform/plant/edit/".$result->plant_id."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/plant/delete/".$result->plant_id."'>" . t('Delete') . "</a>",
+      );
   } 
   return theme('table', array('header' => $header, 'rows' => $rows));
 }

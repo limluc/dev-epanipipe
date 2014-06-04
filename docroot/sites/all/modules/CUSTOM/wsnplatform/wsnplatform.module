@@ -255,8 +255,6 @@ function wsnplatform_menu() {
     'file' => 'wsnplatform.management.inc',
   );
 
-
-
   //Dashboard Branch
   $items['wsnplatformdashboard'] = array(
     'title' => 'WSN Platform Dashboard',
@@ -283,7 +281,9 @@ function wsnplatform_menu() {
     'type' => MENU_NORMAL_ITEM,
     'menu_name' => 'main-menu',
     'access arguments' => array('WSN Platform: View'),
-    'page callback' => 'wsnplatform_dashboard_node',
+    'page callback' => 'wsnplatform_dashboard_node_page',
+    //'page callback' => 'drupal_get_form',
+    //'page arguments' => array(1),
     'weight' => 21,
     'file' => 'wsnplatform.dashboard.inc',
   );

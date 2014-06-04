@@ -90,93 +90,156 @@ function wsnplatform_dashboard_group(){
 }
 
 /**
+ * Implements hook_form().
+ */
+ function wsnplatform_dashboard_node_form($form, &$form_state){
+       
+     //Query DB for Rows
+    $query = db_select('wsnplatform_nodeentity', 'ne')
+        ->fields('ne')
+        ->orderBy('nodeentity_nid', 'ASC');
+    $results = $query->execute();
+    
+    //define rows
+    $options = array();
+    $options[0] = '<SELECT WHICH NODE TO VIEW>';
+    foreach ($results as $result) {
+        $options[$result->input_id] = $result->input_id;
+    }
+    
+    $form['id'] = array(
+      '#type' => 'select',
+      '#title' => t('WSN Platform Node Entity ID'),
+      '#options' => $options,
+      '#prefix' => '<div class="panel panel-primary"><div class="panel-heading">',
+      '#suffix' => '</div></div>',
+      );
+
+    $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Select'),
+    );
+    
+    return $form;
+}
+
+/**
+ * Submit  handler for the wsnplatform_dashboard_node_form. Insert entry to database
+ */
+function wsnplatform_dashboard_node_form_submit($form, &$form_state){
+    //need to validate sensor first  
+    $from = $form_state['values']['id'];
+    $form_state['redirect'] =  'wsnplatformdashboard/node/'.$from;
+    
+}
+/**
  * Custom
  * 
  */
-function wsnplatform_dashboard_node(){
-      //need to validate sensor first  
-    $from='447938797117'; //to create dropdown list
-    $query = db_select('wsnplatform_nodeentity', 'ne');
-    $query -> join('wsnplatform_datacompression', 'dc' , 'dc.datacompression_id = ne.datacompression_id');
-    $query
-      -> fields('ne', array('nodeentity_nid','last_measured','last_text','datacompression_id','input_id', 'reading_occurence', 'sensor_number', 'freq_read', 'freq_trans'))
-      -> fields('dc', array('datacompression_id','datacompression_title'))
-      -> condition('ne.input_id', $from);     
-    $result = $query->execute();   
-    $data = $result->fetchAssoc();
-    //getting info on node
-    
-    $query2 = db_select('wsnplatform_observation', 'wo')
-      ->fields('wo')
-      ->condition('wo.timestamp',$data['last_measured'])
-      ->condition('wo.observation_type',0);
-    $result2 = $query2->execute();
-    $data2 = $result2->fetchAssoc();
-    
-   $header = array(
-    t('Sensor'),
-    t('Measured Value'),
-   );
-    $rows = array(
-    array(t('Average Temperature (C)'), $data2['sensor_one']),
-    array(t('Average Humidity (%)'), $data2['sensor_two']),
-    array(t('Maximum Temperature (C)'), $data2['sensor_three']),
-    array(t('Minimum Temperature (C)'), $data2['sensor_four']),
-    array(t('Maximum Humidity (%)'), $data2['sensor_five']),
-    array(t('Minimum Humidity (%)'), $data2['sensor_six']),
-    array(t('Water Level (cm)'), $data2['sensor_seven']),
-    array(t('Water Salinity (uS/cm)'), $data2['sensor_eight']),
-    array(t('Light Level (%)'), $data2['sensor_nine']),
-    array(t('Battery Level (%)'), $data2['sensor_ten']),
-    );
-   $header2 = array(
-    t('Node Information'),
-    t('Value'),
-   );
-    $rows2 = array(
-    array(t('Data Compression Technique'), $data['datacompression_title']),
-    array(t('Number of Sensor'), $data['sensor_number']),
-    array(t('Input ID'), $data['input_id']),
-    array(t('Last Measured'), date( 'Y-m-d H:i:s', $data['last_measured'])),
-    array(t('Reading Occurence'), $data['reading_occurence']),
-    array(t('Frequency of Reading (s)'), $data['freq_read']),
-    array(t('Frequency of Transmission (s)'), $data['freq_trans']),
-    );
-    
-  $results3 = db_select('wsnplatform_observation', 'wo')
-    ->fields('wo')           
-    ->condition('wo.nodeentity_nid', $data['nodeentity_nid'])
-    ->orderBy('wo.timestamp', 'DESC')
-    ->execute();
-  $header3 = array(
-    t('Time Stamp'),
-    t('Average Temperature'),
-    t('Average Humidity'),
-    t('Maximum Temperature'),
-    t('Minimum Temperature'),
-    t('Maximum Humidity'),
-    t('Minimum Humidity'),
-    t('Water Level'),
-    t('Water Salinity'),
-    t('Light Level'),
-    t('Battery Level')
-   );
-  $rows3 = array(); 
-  foreach($results3 AS $result){
-    $rows3[] = array(
-      check_plain(date( 'Y-m-d H:i:s', $result->timestamp)), 
-      check_plain($result->sensor_one),
-      check_plain($result->sensor_two),
-      check_plain($result->sensor_three),
-      check_plain($result->sensor_four),
-      check_plain($result->sensor_five),
-      check_plain($result->sensor_six),
-      check_plain($result->sensor_seven),
-      check_plain($result->sensor_eight),
-      check_plain($result->sensor_nine),
-      check_plain($result->sensor_ten)
-    );
-  } 
+function wsnplatform_dashboard_node_page(){
+
+$from = arg(2); 
+$query = db_select('wsnplatform_nodeentity', 'ne');
+$query -> join('wsnplatform_datacompression', 'dc' , 'dc.datacompression_id = ne.datacompression_id');
+$query
+  -> fields('ne', array('nodeentity_nid','last_measured','last_text','datacompression_id','input_id', 'reading_occurence', 'sensor_number', 'freq_read', 'freq_trans'))
+  -> fields('dc', array('datacompression_id','datacompression_title'))
+  -> condition('ne.input_id', $from);     
+$result = $query->execute();   
+$data = $result->fetchAssoc();
+//getting more static data from the node!! 
+ $header2 = array(
+  t('Node Information'),
+  t('Value'),
+ );
+  $rows2 = array(
+  array(t('Input ID'), $data['input_id']),
+  array(t('Number of Sensor'), $data['sensor_number']),
+  array(t('Reading Occurence'), $data['reading_occurence']),
+  array(t('Frequency of Reading (s)'), $data['freq_read']),
+  array(t('Frequency of Transmission (s)'), $data['freq_trans']),
+  array(t('Data Compression Technique'), $data['datacompression_title']),
+  array(t('Last Measured Time'), date( 'Y-m-d H:i:s', $data['last_measured'])),
+  );
+//getting the latest reading//
+$query2 = db_select('wsnplatform_observation', 'wo')
+  ->fields('wo')
+  ->condition('wo.timestamp',$data['last_measured'])
+  ->condition('wo.observation_type',0)
+  ->condition('wo.nodeentity_nid', $data['nodeentity_nid']);
+$result2 = $query2->execute();
+$data2 = $result2->fetchAssoc();
+//getting the latest reading//
+
+//getting the latest reading//
+$query5 = db_select('wsnplatform_sensor', 'se');
+$query5
+  -> fields('se')
+  -> condition('se.nodeentity_nid',$data['nodeentity_nid']);
+$result5 = $query5->execute();
+/////////////////////////////////
+$unsvalue = unserialize($data2['value_array']);
+$stat = '';
+$rows =array();
+foreach($result5 AS $res){
+   $i = $res->order_number; 
+   if($unsvalue[$i-1] < $res->low_threshold)
+     $stat='LOW';
+   elseif($unsvalue[$i-1] > $res->high_threshold)
+     $stat='HIGH';
+   else 
+     $stat='NORMAL';
+       
+    $rows[] = array(
+       $res->sensor_title,
+       $unsvalue[$i-1],
+       $stat,
+       );
+  }         
+ $header = array(
+  t('Sensor Class'),
+t('Measured Value'),
+t('Status')
+ );
+
+//getting the observation//
+$results3 = db_select('wsnplatform_observation', 'wo')
+  ->fields('wo')           
+  ->condition('wo.nodeentity_nid', $data['nodeentity_nid'])
+  ->orderBy('wo.timestamp', 'DESC')
+  ->execute();
+      $header3 = array(
+        t('Time Stamp'),
+        t('Average Temperature'),
+        t('Average Humidity'),
+        t('Maximum Temperature'),
+        t('Minimum Temperature'),
+        t('Maximum Humidity'),
+        t('Minimum Humidity'),
+        t('Water Level'),
+        t('Water Salinity'),
+        t('Light Level'),
+        t('Battery Level')
+       );
+      $rows3 = array(); 
+      foreach($results3 AS $result){
+        $rows3[] = array(
+          check_plain(date( 'Y-m-d H:i:s', $result->timestamp)), 
+          check_plain($result->sensor_one),
+          check_plain($result->sensor_two),
+          check_plain($result->sensor_three),
+          check_plain($result->sensor_four),
+          check_plain($result->sensor_five),
+          check_plain($result->sensor_six),
+          check_plain($result->sensor_seven),
+          check_plain($result->sensor_eight),
+          check_plain($result->sensor_nine),
+          check_plain($result->sensor_ten)
+        );
+      };
+    $content['from'] = drupal_get_form('wsnplatform_dashboard_node_form');
+
+//getting the observation//
     $content['raw_markup'] = array(
       '#type' => 'markup',
       '#markup' => '
@@ -211,7 +274,7 @@ function wsnplatform_dashboard_node(){
             <div class="col-lg-6">
               <div class="panel panel-primary">
                 <div class="panel-heading">
-                  <h3 class="panel-title"><i class="fa fa-clock-o"></i>Recent Update</h3>
+                  <h3 class="panel-title"><i class="fa fa-clock-o"></i>Most Recent Update</h3>
                 </div>
                 <div class="panel-body">'.
                 theme('table', array('header' => $header, 'rows' => $rows))
