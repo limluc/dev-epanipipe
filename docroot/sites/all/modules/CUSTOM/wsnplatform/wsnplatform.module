@@ -399,14 +399,14 @@ function wsnplatform_observation_insert($modeunit, $created, $value, $type){
         $fresult1 = $result1->fetchAssoc();
         
         $newvalue[$i] = $value[$i]*$fresult1['callibration_a2']*$fresult1['callibration_a2'] +
-                        $value[$i]*$fresult1['callibration_a1'] +
+                        $value[$i]*$fresult1['callibration_a1'] + 
                         $fresult1['callibration_a0'];
-      //function for quick check
+      //function for quick check //fixed here?
       if($fresult1['notification_id']){
-          if($newvalue < $fresult1['low_threshold']){
+          if($newvalue[$i] < $fresult1['low_threshold']){
               $notitext[] = $fresult1['sensor_title'] . " is LOW"; 
           }
-          if($newvalue > $fresult1['high_threshold']){
+          if($newvalue [$i]> $fresult1['high_threshold']){
               $notitext[] = $fresult1['sensor_title'] . " is HIGH"; 
           }
       }

@@ -165,7 +165,7 @@ $rowslog = array();
 $querylog = db_select('wsnplatform_comms_log', 'cl')
   ->fields('cl')
   ->condition('data_type','Notification')
-  ->condition('post_message', $from);
+  ->condition('post_message', $data['input_id']);
 $resultlog = $querylog -> execute();
   foreach($resultlog AS $result){
     if(!empty($result)){
@@ -188,6 +188,7 @@ $query5
   -> fields('se')
   -> condition('se.nodeentity_nid',$data['nodeentity_nid']);
 $result5 = $query5->execute();
+
 /////////////////////////////////
 $unsvalue = unserialize($data2['value_array']);
 $stat = '';

@@ -174,7 +174,7 @@ function wsnplatform_comms_sms_receiver() {
 function wsnplatform_comms_observationarray_insert($nodeentity, $datas, $type){
     $created = REQUEST_TIME;
     for($row = 0; $row < $nodeentity["reading_occurence"] ; $row ++){
-          $readtime = $created - ($row * $nodeentity["freq_read"]);
+          $readtime = $created - (($nodeentity["reading_occurence"]- $row -1 ) * $nodeentity["freq_read"]);
           wsnplatform_observation_insert($nodeentity["nodeentity_nid"], $readtime, $datas[$row], $type);
     }  
 }
@@ -415,7 +415,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
           -> condition('se.nodeentity_nid',$result);
         $result2 = $query->execute();
         $fresult = $result2->fetchAssoc();
-        if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < (REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text')))){
+        if((count($fresult)>0) && ($fresult['last_text'] < (REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text')))){
             //get weather
             $weather = 'Weather Forecast '. 'Mostly Cloudy';
             $textback = '';
@@ -424,7 +424,7 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
             }
             $textback = $textback . " " .$weather;
             
-            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $fresult->input_id, 'Notification');
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, rand()*rand(), $fresult['input_id'], 'Notification');
             sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
