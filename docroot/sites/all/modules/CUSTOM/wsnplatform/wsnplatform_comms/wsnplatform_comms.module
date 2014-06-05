@@ -273,6 +273,7 @@ function wsnplatform_comms_data_io($from, $mid, $text){
       }
      //capture this to local schema
      $post_message = serialize($raw_data["post_message"]);
+     
      wsnplatform_comms_archive_write($message_status, $from, $text, $mid, $post_message, $data_type);
   }//if valid sender
 }
