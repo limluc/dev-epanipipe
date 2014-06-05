@@ -8,3 +8,5 @@ files[] = wsnplatform.module
 files[] = wsnplatform.views.inc
 files[] = wsnplatform.dashboard.inc
 files[] = wsnplatform.management.inc
+files[] = js/wsnplatform.js
+files[] = js/highchart.js

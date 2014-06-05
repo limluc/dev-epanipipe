@@ -132,9 +132,9 @@ function wsnplatform_group_form_submit($form, &$form_state){
     ->orderBy('ne.nodeentity_nid')
     ->execute();
   $header = array(
-    t('MoteUnit ID'),
-    t('MoteUnit Title'),
-    t('MoteGroup ID'),
+    t('Node Entity ID'),
+    t('Node Entity Title'),
+    t('Node Group ID'),
     t('Input ID'),
     t('Reading Occurence'),
     t('Sensor Number'),

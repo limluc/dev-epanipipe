@@ -298,7 +298,6 @@ function wsnplatform_menu() {
     'file' => 'wsnplatform.dashboard.inc',
   );
   
-  
   return $items;
 }
 

@@ -410,21 +410,21 @@ function wsnplatform_comms_archive_purge($max_age_days = NULL) {
         $query -> join('wsnplatform_nodeentity', 'ne', 'ne.nodeentity_nid = se.nodeentity_nid');
         $query
           -> fields('nt', array('notification_id', 'notification_message', 'notification_receiver', 'notification_condition'))
-          -> fields('ne', array('nodeentity_nid','site_location', 'last_text'))
+          -> fields('ne', array('nodeentity_nid','site_location', 'last_text', 'input_id'))
           -> fields('se', array('sensor_nid'))
           -> condition('se.nodeentity_nid',$result);
         $result2 = $query->execute();
         $fresult = $result2->fetchAssoc();
         if((count($fresult)>0) && ($fresult['last_text']!=0) && ($fresult['last_text'] < (REQUEST_TIME - variable_get('wsnplatform_comms_wait_new_text')))){
             //get weather
-            $weather = 'Weather Forecast '. 'SUNNY';
+            $weather = 'Weather Forecast '. 'Mostly Cloudy';
             $textback = '';
             for($i = 0 ; $i < count($text); $i++){
               $textback = $text[$i]. " ". $textback;
             }
             $textback = $textback . " " .$weather;
             
-            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $textback, 'Notification');
+            wsnplatform_comms_archive_write('0', $fresult['notification_receiver'] , $textback, (rand()*REQUEST_TIME), $fresult->input_id, 'Notification');
             sms_send($fresult['notification_receiver'], $textback);
             
             $query = db_update('wsnplatform_nodeentity')
