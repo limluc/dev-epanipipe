@@ -40,8 +40,8 @@
       check_plain($result->contact_address),
       check_plain($result->contact_language),
       check_plain($result->contact_details),
-      "<a href='wsnplatform/sensormodel/edit/".$result->group_nid."'>" . t('Edit') . "</a> |
-       <a href='wsnplatform/sensormodel/delete/".$result->group_nid."'>" . t('Delete') . "</a>",
+      "<a href='wsnplatform/group/edit/".$result->group_nid."'>" . t('Edit') . "</a> |
+       <a href='wsnplatform/group/delete/".$result->group_nid."'>" . t('Delete') . "</a>",
       
     );
   } 

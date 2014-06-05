@@ -267,7 +267,7 @@ function wsnplatform_menu() {
   
   $items['wsnplatformdashboard/group'] = array(
     'title' => 'Overall View',
-    'description' => 'WSN Platform Dashboard Overall View',
+    'description' => 'WSN Platform Dashboard',
     'type' => MENU_NORMAL_ITEM,
     'menu_name' => 'main-menu',
     'access arguments' => array('WSN Platform: View'),
@@ -276,7 +276,7 @@ function wsnplatform_menu() {
     'file' => 'wsnplatform.dashboard.inc',
   );
   $items['wsnplatformdashboard/node'] = array(
-    'title' => 'Node Unit View',
+    'title' => 'Individual Node View',
     'description' => 'WSN Platform Dashboard Node View',
     'type' => MENU_NORMAL_ITEM,
     'menu_name' => 'main-menu',
@@ -288,12 +288,10 @@ function wsnplatform_menu() {
     'file' => 'wsnplatform.dashboard.inc',
   );
   $items['wsnplatformdashboard/multi'] = array(
-    'title' => 'Multi View',
+    'title' => 'Graphical Presentation',
     'description' => 'WSN Platform Dashboard Multi View',
-    'type' => MENU_NORMAL_ITEM,
-    'menu_name' => 'main-menu',
     'access arguments' => array('WSN Platform: View'),
-    'page callback' => 'wsnplatform_dashboard_multi',
+    'page callback' => 'wsnplatform_dashboard_multi_page',
     'weight' => 22,
     'file' => 'wsnplatform.dashboard.inc',
   );
